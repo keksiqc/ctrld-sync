@@ -187,25 +187,32 @@ def sync_profile(profile_id: str) -> None:
 
     existing = list_existing_folders(profile_id)
     for name in wanted_names:
-        if name in existing:
-            delete_folder(profile_id, name, existing[name])
+        try:
+            if name in existing:
+                delete_folder(profile_id, name, existing[name])
+        except Exception as e:
+            log.error("Skipping deletion of folder '%s' due to error: %s", name, str(e))
+            continue
 
     for url in FOLDER_URLS:
-        js = _gh_get(url)
-        grp = js["group"]
-        folder_name = grp["group"]
-        do = grp["action"]["do"]
-        status = grp["action"]["status"]
-        hostnames = [r["PK"] for r in js.get("rules", []) if r.get("PK")]
+        try:
+            js = _gh_get(url)
+            grp = js["group"]
+            folder_name = grp["group"]
+            do = grp["action"]["do"]
+            status = grp["action"]["status"]
+            hostnames = [r["PK"] for r in js.get("rules", []) if r.get("PK")]
 
-        folder_id = create_folder(profile_id, folder_name, do, status)
-        if hostnames:
-            push_rules(profile_id, folder_name, folder_id, do, status, hostnames)
-        else:
-            log.info("Folder '%s' - no rules to push", folder_name)
+            folder_id = create_folder(profile_id, folder_name, do, status)
+            if hostnames:
+                push_rules(profile_id, folder_name, folder_id, do, status, hostnames)
+            else:
+                log.info("Folder '%s' - no rules to push", folder_name)
+        except Exception as e:
+            log.error("Skipping folder from URL '%s' due to error: %s", url, str(e))
+            continue
 
     log.info("Sync complete ✔")
-
 
 # --------------------------------------------------------------------------- #
 # 5. Entry-point
