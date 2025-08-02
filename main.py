@@ -395,8 +395,10 @@ def sync_profile(profile_id: str) -> bool:
         folder_data_list = []
         for url in folder_urls:
             try:
-                log.debug(f"Fetching folder data from: '{url}'")
-                folder_data_list.append(fetch_folder_data(url))
+                # Clean the URL again right before using it
+                cleaned_url = url.strip().replace('"', "").replace("'", "")
+                log.debug(f"Fetching folder data from: '{cleaned_url}'")
+                folder_data_list.append(fetch_folder_data(cleaned_url))
             except (httpx.HTTPError, KeyError) as e:
                 log.error(f"Failed to fetch folder data from '{url}': {e}")
                 continue
