@@ -95,7 +95,8 @@ def get_profile_folders(profile_index: int) -> List[str]:
         # Split by comma and clean each URL (strip whitespace and quotes)
         urls = []
         for url in folder_urls_str.split(","):
-            cleaned_url = url.strip().strip('"').strip("'")
+            # Be more aggressive with cleaning quotes
+            cleaned_url = url.strip().replace('"', "").replace("'", "")
             if cleaned_url:
                 urls.append(cleaned_url)
 
