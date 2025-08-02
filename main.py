@@ -86,6 +86,12 @@ def get_profile_folders(profile_index: int) -> List[str]:
     log.debug(f"Found value: {folder_urls_str}")
 
     if folder_urls_str:
+        # Remove outer quotes from the entire string if present
+        if folder_urls_str.startswith(('"', "'")) and folder_urls_str.endswith(
+            ('"', "'")
+        ):
+            folder_urls_str = folder_urls_str[1:-1]
+
         # Split by comma and clean each URL (strip whitespace and quotes)
         urls = []
         for url in folder_urls_str.split(","):
