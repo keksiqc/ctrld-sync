@@ -86,7 +86,13 @@ def get_profile_folders(profile_index: int) -> List[str]:
     log.debug(f"Found value: {folder_urls_str}")
 
     if folder_urls_str:
-        urls = [url.strip() for url in folder_urls_str.split(",") if url.strip()]
+        # Split by comma and clean each URL (strip whitespace and quotes)
+        urls = []
+        for url in folder_urls_str.split(","):
+            cleaned_url = url.strip().strip('"').strip("'")
+            if cleaned_url:
+                urls.append(cleaned_url)
+
         log.info(f"Profile {profile_index + 1}: using {len(urls)} custom folder URLs")
         log.debug(f"Profile {profile_index + 1} custom URLs: {urls}")
         return urls
@@ -384,9 +390,10 @@ def sync_profile(profile_id: str) -> bool:
         folder_data_list = []
         for url in folder_urls:
             try:
+                log.debug(f"Fetching folder data from: '{url}'")
                 folder_data_list.append(fetch_folder_data(url))
             except (httpx.HTTPError, KeyError) as e:
-                log.error(f"Failed to fetch folder data from {url}: {e}")
+                log.error(f"Failed to fetch folder data from '{url}': {e}")
                 continue
 
         if not folder_data_list:
