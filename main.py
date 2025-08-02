@@ -395,10 +395,8 @@ def sync_profile(profile_id: str) -> bool:
         folder_data_list = []
         for url in folder_urls:
             try:
-                # Clean the URL again right before using it
-                cleaned_url = url.strip().replace('"', "").replace("'", "")
-                log.debug(f"Fetching folder data from: '{cleaned_url}'")
-                folder_data_list.append(fetch_folder_data(cleaned_url))
+                log.debug(f"Fetching folder data from: '{url}'")
+                folder_data_list.append(fetch_folder_data(url))
             except (httpx.HTTPError, KeyError) as e:
                 log.error(f"Failed to fetch folder data from '{url}': {e}")
                 continue
@@ -462,16 +460,16 @@ def main():
         env_value = os.getenv(env_key)
         if env_value:
             log.info(
-                f"Profile {i + 1}: Found custom configuration with {len(env_value.split(','))} folders"
+                f"Profile {i + 1} ({profile_id}): Found custom configuration with {len(env_value.split(','))} folders"
             )
         else:
             log.info(
-                f"Profile {i + 1}: No custom configuration found, will use defaults"
+                f"Profile {i + 1} ({profile_id}): No custom configuration found, will use defaults"
             )
 
     success_count = 0
     for profile_id in PROFILE_IDS:
-        log.info("Starting sync for profile")
+        log.info(f"Starting sync for profile {profile_id}")
         if sync_profile(profile_id):
             success_count += 1
 
