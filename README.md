@@ -49,11 +49,17 @@ https://controld.com/dashboard/profiles/741861frakbm/filters
    No additional configuration needed. All profiles will use the default folder URLs defined in `main.py`.
    
    **Option 2: Configure different folders for each profile**  
-   Add profile-specific environment variables to your `.env` file:
+   Add profile-specific environment variables to your `.env` file using the profile's index (starting from 0). For the first profile ID in your `PROFILE` list, use `PROFILE_0_FOLDERS`, for the second use `PROFILE_1_FOLDERS`, and so on.
+   
+   Example:
    ```py
-   # Profile-specific folder configurations (optional)
-   PROFILE_123456_FOLDERS=https://example.com/folder1.json,https://example.com/folder2.json
-   PROFILE_789012_FOLDERS=https://example.com/folder3.json,https://example.com/folder4.json
+   # .env
+   PROFILE=first_profile_id,second_profile_id
+
+   # Corresponds to first_profile_id
+   PROFILE_0_FOLDERS=https://example.com/folder1.json,https://example.com/folder2.json
+   # Corresponds to second_profile_id
+   PROFILE_1_FOLDERS=https://example.com/folder3.json,https://example.com/folder4.json
    ```
    
    **Option 3: Edit default folders**  
