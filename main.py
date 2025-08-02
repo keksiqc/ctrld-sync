@@ -13,14 +13,14 @@ It does three things:
 Configuration:
 - TOKEN: Your Control D API token
 - PROFILE: Comma-separated list of profile IDs to sync
-- PROFILE_<profile_id>_FOLDERS: Comma-separated list of folder URLs for specific profile
-  (if not set, uses default folder URLs)
+- PROFILE_X_FOLDERS: Comma-separated list of folder URLs for profile at index X
+  (X=0 for first profile, X=1 for second, etc. If not set, uses default folder URLs)
 
 Example environment variables:
 TOKEN=your_api_token_here
-PROFILE=123456,789012
-PROFILE_123456_FOLDERS=https://example.com/folder1.json,https://example.com/folder2.json
-PROFILE_789012_FOLDERS=https://example.com/folder3.json
+PROFILE=first_profile_id,second_profile_id
+PROFILE_0_FOLDERS=https://example.com/folder1.json,https://example.com/folder2.json
+PROFILE_1_FOLDERS=https://example.com/folder3.json
 
 Nothing fancy, just works.
 """
@@ -38,8 +38,12 @@ from dotenv import load_dotenv
 # --------------------------------------------------------------------------- #
 load_dotenv()
 
+# Enable debug logging if DEBUG environment variable is set
+debug_mode = os.getenv("DEBUG", "").lower() in ("1", "true", "yes")
+log_level = logging.DEBUG if debug_mode else logging.INFO
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
     datefmt="%H:%M:%S",
 )
@@ -72,23 +76,37 @@ DEFAULT_FOLDER_URLS = [
 # Format: {profile_id: [list_of_folder_urls]}
 PROFILE_FOLDERS = {}
 
-# Parse profile-specific folder configurations from environment variables
-# Format: PROFILE_<profile_id>_FOLDERS="url1,url2,url3"
-for profile_id in PROFILE_IDS:
-    env_key = f"PROFILE_{profile_id}_FOLDERS"
+
+def get_profile_folders(profile_index: int) -> List[str]:
+    """Get folder URLs for a specific profile by index, with fallback to defaults."""
+    env_key = f"PROFILE_{profile_index}_FOLDERS"
     folder_urls_str = os.getenv(env_key)
+
+    log.debug(f"Looking for environment variable: {env_key}")
+    log.debug(f"Found value: {folder_urls_str}")
+
     if folder_urls_str:
-        PROFILE_FOLDERS[profile_id] = [
-            url.strip() for url in folder_urls_str.split(",") if url.strip()
-        ]
-        log.info(
-            f"Profile {profile_id}: using {len(PROFILE_FOLDERS[profile_id])} custom folder URLs"
-        )
+        urls = [url.strip() for url in folder_urls_str.split(",") if url.strip()]
+        log.info(f"Profile {profile_index + 1}: using {len(urls)} custom folder URLs")
+        log.debug(f"Profile {profile_index + 1} custom URLs: {urls}")
+        return urls
     else:
-        PROFILE_FOLDERS[profile_id] = DEFAULT_FOLDER_URLS
         log.info(
-            f"Profile {profile_id}: using {len(DEFAULT_FOLDER_URLS)} default folder URLs"
+            f"Profile {profile_index + 1}: no custom folders found, using {len(DEFAULT_FOLDER_URLS)} default folder URLs"
         )
+        log.debug(f"Profile {profile_index + 1} default URLs: {DEFAULT_FOLDER_URLS}")
+        return DEFAULT_FOLDER_URLS
+
+
+# Initialize profile folders for each profile ID using index-based lookup
+for i, profile_id in enumerate(PROFILE_IDS):
+    PROFILE_FOLDERS[profile_id] = get_profile_folders(i)
+
+# Debug: Print all environment variables that start with PROFILE_
+log.debug("All PROFILE_* environment variables:")
+for key, value in os.environ.items():
+    if key.startswith("PROFILE_"):
+        log.debug(f"  {key}={value}")
 
 BATCH_SIZE = 500
 MAX_RETRIES = 3
@@ -358,9 +376,9 @@ def push_rules(
 def sync_profile(profile_id: str) -> bool:
     """One-shot sync: delete old, create new, push rules. Returns True if successful."""
     try:
-        # Get folder URLs for this specific profile
+        # Get folder URLs for this specific profile using the cached lookup
         folder_urls = PROFILE_FOLDERS.get(profile_id, DEFAULT_FOLDER_URLS)
-        log.info(f"Profile {profile_id}: syncing {len(folder_urls)} folders")
+        log.info(f"Profile: syncing {len(folder_urls)} folders")
 
         # Fetch all folder data first
         folder_data_list = []
@@ -422,9 +440,24 @@ def main():
         log.error("TOKEN and/or PROFILE missing - check your .env file")
         exit(1)
 
+    log.info(f"Found {len(PROFILE_IDS)} profiles")
+
+    # Debug: Show configuration for each profile
+    for i, profile_id in enumerate(PROFILE_IDS):
+        env_key = f"PROFILE_{i}_FOLDERS"
+        env_value = os.getenv(env_key)
+        if env_value:
+            log.info(
+                f"Profile {i + 1}: Found custom configuration with {len(env_value.split(','))} folders"
+            )
+        else:
+            log.info(
+                f"Profile {i + 1}: No custom configuration found, will use defaults"
+            )
+
     success_count = 0
     for profile_id in PROFILE_IDS:
-        log.info("Starting sync for profile %s", profile_id)
+        log.info("Starting sync for profile")
         if sync_profile(profile_id):
             success_count += 1
 
