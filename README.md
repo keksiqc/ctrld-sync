@@ -44,7 +44,20 @@ https://controld.com/dashboard/profiles/741861frakbm/filters
    ```
 
 3. **Configure Folders**  
-   Edit the `FOLDER_URLS` list in `main.py` to include the URLs of the JSON block-lists you want to sync.
+   
+   **Option 1: Use default folders for all profiles**  
+   No additional configuration needed. All profiles will use the default folder URLs defined in `main.py`.
+   
+   **Option 2: Configure different folders for each profile**  
+   Add profile-specific environment variables to your `.env` file:
+   ```py
+   # Profile-specific folder configurations (optional)
+   PROFILE_123456_FOLDERS=https://example.com/folder1.json,https://example.com/folder2.json
+   PROFILE_789012_FOLDERS=https://example.com/folder3.json,https://example.com/folder4.json
+   ```
+   
+   **Option 3: Edit default folders**  
+   Edit the `DEFAULT_FOLDER_URLS` list in `main.py` to change the default folders used when no profile-specific configuration is provided.
 
 > [!NOTE]
 > Currently only Folders with one action are supported.
