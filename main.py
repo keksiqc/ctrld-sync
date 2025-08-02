@@ -95,6 +95,11 @@ def get_profile_folders(profile_index: int) -> List[str]:
 
         log.info(f"Profile {profile_index + 1}: using {len(urls)} custom folder URLs")
         log.debug(f"Profile {profile_index + 1} custom URLs: {urls}")
+
+        # Log each cleaned URL for debugging
+        for idx, cleaned_url in enumerate(urls):
+            log.debug(f"Cleaned URL {idx + 1}: {cleaned_url}")
+
         return urls
     else:
         log.info(
