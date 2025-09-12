@@ -27,4 +27,6 @@ jobs:
         env:
           TOKEN: ${{ secrets.TOKEN }}
           PROFILE: ${{ secrets.PROFILE }}
+          PROFILE_0_FOLDERS: ${{ secrets.PROFILE_0_FOLDERS }}
+          PROFILE_1_FOLDERS: ${{ secrets.PROFILE_1_FOLDERS }}
         run: uv run python main.py
