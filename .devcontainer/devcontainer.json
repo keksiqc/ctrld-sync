@@ -1,0 +1,25 @@
+{
+	"name": "uv",
+	"image": "mcr.microsoft.com/devcontainers/base:alpine",
+	"features": {},
+	"postCreateCommand": "./.devcontainer/postCreateCommand.sh",
+	"containerEnv": {
+		"UV_LINK_MODE": "copy"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"EditorConfig.EditorConfig",
+				"usernamehw.errorlens",
+				"tamasfe.even-better-toml",
+				"castrogusttavo.symbols",
+				"antfu.icons-carbon",
+				"antfu.file-nesting",
+				"charliermarsh.ruff",
+				"ms-python.debugpy",
+				"ms-python.python",
+				"astral-sh.ty"
+			]
+		}
+	}
+}
