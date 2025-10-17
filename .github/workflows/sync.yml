@@ -26,7 +26,11 @@ jobs:
       - name: Run sync script
         env:
           TOKEN: ${{ secrets.TOKEN }}
-          PROFILE: ${{ secrets.PROFILE }}
-          PROFILE_0_FOLDERS: ${{ secrets.PROFILE_0_FOLDERS }}
-          PROFILE_1_FOLDERS: ${{ secrets.PROFILE_1_FOLDERS }}
+          # PROFILE and folder lists are non-sensitive configuration values.
+          # Store them as repository/organization variables and access via vars.
+          PROFILE: ${{ vars.PROFILE }}
+          PROFILE_0_FOLDERS: ${{ vars.PROFILE_0_FOLDERS }}
+          PROFILE_1_FOLDERS: ${{ vars.PROFILE_1_FOLDERS }}
+          PROFILE_2_FOLDERS: ${{ vars.PROFILE_2_FOLDERS }}
+          PROFILE_3_FOLDERS: ${{ vars.PROFILE_3_FOLDERS }}
         run: uv run python main.py
