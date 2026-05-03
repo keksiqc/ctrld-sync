@@ -32,11 +32,13 @@ jobs:
 
       - name: Generate changelog
         # Pass the built-in GITHUB_TOKEN explicitly using the --token flag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           github_changelog_generator \
             --user "${GITHUB_REPOSITORY_OWNER}" \
             --project "${GITHUB_REPOSITORY#*/}" \
-            --token "${{ secrets.GITHUB_TOKEN }}"
+            --token "$GITHUB_TOKEN"
 
       - name: Commit and Push Changes
         run: |
