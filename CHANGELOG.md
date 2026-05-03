@@ -41,6 +41,7 @@
 
 **Closed issues:**
 
+- \[repo-automation\] Weekly Retrospective - 2026-05-03 [\#758](https://github.com/abhimehro/ctrld-sync/issues/758)
 - \[repo-automation\] Weekly Retrospective - 2026-04-26 [\#744](https://github.com/abhimehro/ctrld-sync/issues/744)
 - \[repo-automation\] Weekly Retrospective - 2026-04-19 [\#729](https://github.com/abhimehro/ctrld-sync/issues/729)
 - \[repo-automation\] Weekly Retrospective - 2026-04-12 [\#718](https://github.com/abhimehro/ctrld-sync/issues/718)
