@@ -462,6 +462,7 @@ class TestGetValidatedInput:
         assert f"\033[2m{main.EMPTY_INPUT_HINT}\033[0m" in captured.out
         assert f"\033[2m{main.INVALID_INPUT_HINT}\033[0m" in captured.out
 
+
 def test_print_hint_helper_usage(monkeypatch, capsys):
     """Verify that _print_hint appropriately styles text and retains emojis."""
 
@@ -480,7 +481,6 @@ def test_print_hint_helper_usage(monkeypatch, capsys):
     main._print_hint("💡 Hint: Just a test")
     captured = capsys.readouterr()
     assert "\033[2m💡 Hint: Just a test\033[0m" in captured.out
-
 
 
 @pytest.mark.parametrize("use_colors", [True, False])
@@ -503,7 +503,10 @@ def test_print_summary_table_empty_state_hint(monkeypatch, capsys, use_colors: b
         sync_results=sync_results, success_count=1, total=1, dry_run=False
     )
     captured = capsys.readouterr()
-    assert "Hint: Add folder URLs using --folder-url or in your config.yaml" in captured.out
+    assert (
+        "Hint: Add folder URLs using --folder-url or in your config.yaml"
+        in captured.out
+    )
 
 
 def test_print_plan_details_retains_emojis_in_no_color(monkeypatch, capsys):
@@ -516,9 +519,23 @@ def test_print_plan_details_retains_emojis_in_no_color(monkeypatch, capsys):
         "profile": "test",
         "folders": [
             {"name": "Folder 1", "rules": 10, "action": 0},
-            {"name": "Folder 2", "rules": 20, "rule_groups": [{"rules": 10, "action": 1, "status": 1}, {"rules": 10, "action": 1, "status": 1}]},
-            {"name": "Folder 3", "rules": 30, "rule_groups": [{"rules": 15, "action": 0, "status": 1}, {"rules": 15, "action": 1, "status": 1}]},
-        ]
+            {
+                "name": "Folder 2",
+                "rules": 20,
+                "rule_groups": [
+                    {"rules": 10, "action": 1, "status": 1},
+                    {"rules": 10, "action": 1, "status": 1},
+                ],
+            },
+            {
+                "name": "Folder 3",
+                "rules": 30,
+                "rule_groups": [
+                    {"rules": 15, "action": 0, "status": 1},
+                    {"rules": 15, "action": 1, "status": 1},
+                ],
+            },
+        ],
     }
     main.print_plan_details(plan_entry)
     captured = capsys.readouterr()
@@ -549,7 +566,9 @@ class TestGetPasswordHint:
         monkeypatch.setattr("builtins.input", fake_input)
         monkeypatch.setattr("getpass.getpass", fake_input)
         try:
-            main.get_password("Enter API token:", validator=lambda v: True, error_msg="bad")
+            main.get_password(
+                "Enter API token:", validator=lambda v: True, error_msg="bad"
+            )
         except (EOFError, OSError, StopIteration):
             pass
 

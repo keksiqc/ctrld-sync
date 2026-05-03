@@ -33,6 +33,7 @@ class TestDiskCache(unittest.TestCase):
         main._cache.clear()
         main._disk_cache.clear()
         main.validate_folder_url.cache_clear()
+        main.validate_hostname.cache_clear()
         # Reset stats in-place so both cache._cache_stats and main._cache_stats
         # (which are the same dict) reflect fresh zeroes.
         cache._cache_stats.clear()
@@ -48,6 +49,7 @@ class TestDiskCache(unittest.TestCase):
         main._cache.clear()
         main._disk_cache.clear()
         main.validate_folder_url.cache_clear()
+        main.validate_hostname.cache_clear()
         cache._cache_stats.clear()
         cache._cache_stats.update(
             {"hits": 0, "misses": 0, "validations": 0, "errors": 0}

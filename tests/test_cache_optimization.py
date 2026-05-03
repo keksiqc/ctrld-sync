@@ -24,11 +24,13 @@ class TestCacheOptimization(unittest.TestCase):
         """Clear cache and validation cache before each test."""
         main._cache.clear()
         main.validate_folder_url.cache_clear()
+        main.validate_hostname.cache_clear()
 
     def tearDown(self):
         """Clean up after each test."""
         main._cache.clear()
         main.validate_folder_url.cache_clear()
+        main.validate_hostname.cache_clear()
 
     def test_cached_url_skips_validation(self):
         """

@@ -1086,7 +1086,7 @@ _CGNAT_NETWORK = ipaddress.IPv4Network("100.64.0.0/10")
 
 
 def _is_safe_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
-    """Rejects multicast, unspecified, loopback, and IPv4 CGNAT addresses; otherwise requires a global IP."""
+    """Rejects non-global, reserved, link-local, loopback, multicast, unspecified, and IPv4 CGNAT addresses."""
     if ip.is_multicast:
         return False
     if ip.is_unspecified:
@@ -1096,6 +1096,8 @@ def _is_safe_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     if ip.is_private:
         return False
     if ip.is_link_local:
+        return False
+    if ip.is_reserved:
         return False
     if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
         return _is_safe_ip(ip.ipv4_mapped)
@@ -2404,6 +2406,7 @@ def sync_profile(
     # SECURITY: Clear cached DNS validations at the start of each sync run.
     # This prevents TOCTOU issues where a domain's IP could change between runs.
     validate_folder_url.cache_clear()
+    validate_hostname.cache_clear()
 
     try:
         # Fetch all folder data first
@@ -2722,7 +2725,9 @@ def print_summary_table(
             f"{sep}\n{'TOTAL':<{w[0]}} | {t_f:>{w[1]}} | {t_r:>{w[2]},} | {t_d:>{w[3] - 1}.1f}s | {t_status:<{w[4]}}\n{sep}\n"
         )
         if t_f == 0:
-            print("  💡 Hint: Add folder URLs using --folder-url or in your config.yaml\n")
+            print(
+                "  💡 Hint: Add folder URLs using --folder-url or in your config.yaml\n"
+            )
         return
 
     # Unicode Table
@@ -2757,7 +2762,9 @@ def print_summary_table(
     print(f"{print_line('└', '┴', '┘', w)}\n")
 
     if t_f == 0:
-        _print_hint("  💡 Hint: Add folder URLs using --folder-url or in your config.yaml")
+        _print_hint(
+            "  💡 Hint: Add folder URLs using --folder-url or in your config.yaml"
+        )
 
 
 def print_success_message(profile_ids: list[str]) -> None:

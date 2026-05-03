@@ -63,6 +63,7 @@ def test_validate_folder_url_uses_validate_hostname():
 
         # Clear cache
         main.validate_folder_url.cache_clear()
+        main.validate_hostname.cache_clear()
 
         url = "https://example.com/data.json"
         assert main.validate_folder_url(url) is True
@@ -74,5 +75,6 @@ def test_validate_folder_url_uses_validate_hostname():
 
         # Clear cache again because URL is the same
         main.validate_folder_url.cache_clear()
+        main.validate_hostname.cache_clear()
 
         assert main.validate_folder_url(url) is False
