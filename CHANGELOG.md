@@ -254,7 +254,10 @@
 **Merged pull requests:**
 
 - Add ctrld-sync CLI testing skill [\#761](https://github.com/abhimehro/ctrld-sync/pull/761) ([abhimehro](https://github.com/abhimehro))
+- Add GitHub Actions workflow testing skill [\#757](https://github.com/abhimehro/ctrld-sync/pull/757) ([abhimehro](https://github.com/abhimehro))
+- ci: pass changelog token via environment [\#756](https://github.com/abhimehro/ctrld-sync/pull/756) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[HIGH\] Fix SSRF bypass via reserved IPs [\#755](https://github.com/abhimehro/ctrld-sync/pull/755) ([abhimehro](https://github.com/abhimehro))
+- 🎨 Palette: \[Fail-Secure Interactive Prompts\] [\#751](https://github.com/abhimehro/ctrld-sync/pull/751) ([abhimehro](https://github.com/abhimehro))
 - ux\(get\_password\): auto-append '\(typing will be hidden\)' hint \(salvages \#742\) [\#743](https://github.com/abhimehro/ctrld-sync/pull/743) ([abhimehro](https://github.com/abhimehro))
 - ⚡ Bolt: Optimize \_clean\_env\_kv with string split [\#740](https://github.com/abhimehro/ctrld-sync/pull/740) ([abhimehro](https://github.com/abhimehro))
 - 🧪 Add tests for \_clean\_env\_kv [\#739](https://github.com/abhimehro/ctrld-sync/pull/739) ([abhimehro](https://github.com/abhimehro))
