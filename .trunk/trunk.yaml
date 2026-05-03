@@ -12,6 +12,7 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
+    - trufflehog-git@3.90.13
     - actionlint@1.7.12
     - bandit@1.9.4
     - black@26.3.1
@@ -42,7 +43,6 @@ actions:
     - trunk-check-pre-commit
     - trunk-check-pre-push-always
     - npm-check-pre-push
-    - trufflehog-pre-commit
     - uv-check
     - uv-lock
     - uv-sync
@@ -51,6 +51,7 @@ actions:
     - poetry-export
     - poetry-check
   enabled:
+    - trufflehog-pre-commit
     - git-blame-ignore-revs
     - trunk-announce
     - trunk-upgrade-available
