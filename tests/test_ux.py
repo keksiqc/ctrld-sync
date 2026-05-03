@@ -404,6 +404,38 @@ class TestPromptForInteractiveRestart:
             captured = capsys.readouterr()
             assert "Cancelled" in captured.out
 
+    @pytest.mark.parametrize(
+        "final_input,should_execute",
+        [
+            ("y", True),
+            ("n", False),
+        ],
+    )
+    def test_handles_invalid_input_then_action(
+        self, monkeypatch, capsys, final_input: str, should_execute: bool
+    ):
+        """Should reprompt on invalid input and then proceed or cancel appropriately."""
+        monkeypatch.setattr(sys, "stdin", _DummyStdin(is_tty=True))
+
+        inputs = iter(["invalid", final_input])
+
+        def mock_input(_):
+            return next(inputs)
+
+        monkeypatch.setattr("builtins.input", mock_input)
+        mock_execv = MagicMock()
+        monkeypatch.setattr(os, "execv", mock_execv)
+
+        main.prompt_for_interactive_restart(["123"])
+
+        captured = capsys.readouterr()
+        assert "Unrecognized input" in captured.out
+        if should_execute:
+            mock_execv.assert_called_once()
+        else:
+            assert "Cancelled" in captured.out
+            mock_execv.assert_not_called()
+
 
 class TestGetValidatedInput:
     def test_get_validated_input_no_colors(self, monkeypatch, capsys):

@@ -44,6 +44,4 @@ addopts = "-p no:cacheprovider"
 testpaths = ["tests", "test_main.py"]
 
 [dependency-groups]
-dev = [
-    "mccabe>=0.7.0",
-]
+dev = []
