@@ -3212,6 +3212,12 @@ def main() -> None:
     # Bottom Border
     print(make_col_separator(Box.BL, Box.B, Box.BR, Box.H, col_widths))
 
+    if total_folders == 0:
+        print()  # Spacer
+        _print_hint(
+            "  💡 Hint: Add folder URLs using --folder-url or in your config.yaml"
+        )
+
     # Success Delight
     if all_success and not args.dry_run:
         print_success_message(profile_ids)
