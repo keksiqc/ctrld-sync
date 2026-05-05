@@ -254,6 +254,9 @@
 
 **Merged pull requests:**
 
+- 🎨 Palette: Add empty state hint in main summary table [\#768](https://github.com/abhimehro/ctrld-sync/pull/768) ([abhimehro](https://github.com/abhimehro))
+- chore: Automated Daily QA Review [\#765](https://github.com/abhimehro/ctrld-sync/pull/765) ([abhimehro](https://github.com/abhimehro))
+- ⚡ Bolt: Optimize rule safety validation fast path [\#762](https://github.com/abhimehro/ctrld-sync/pull/762) ([abhimehro](https://github.com/abhimehro))
 - Add ctrld-sync CLI testing skill [\#761](https://github.com/abhimehro/ctrld-sync/pull/761) ([abhimehro](https://github.com/abhimehro))
 - Add GitHub Actions workflow testing skill [\#757](https://github.com/abhimehro/ctrld-sync/pull/757) ([abhimehro](https://github.com/abhimehro))
 - ci: pass changelog token via environment [\#756](https://github.com/abhimehro/ctrld-sync/pull/756) ([abhimehro](https://github.com/abhimehro))
