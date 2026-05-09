@@ -108,6 +108,13 @@ class TestLogSanitization(unittest.TestCase):
         self.assertNotIn("mytoken", sanitized)
         self.assertIn("[REDACTED]", sanitized)
 
+    def test_sanitize_for_log_redacts_authorization_param(self):
+        """Test that sanitize_for_log redacts the authorization query parameter."""
+        url = "https://example.com/api?authorization=Bearer%20mytoken"
+        sanitized = main.sanitize_for_log(url)
+        self.assertNotIn("Bearer%20mytoken", sanitized)
+        self.assertIn("authorization=[REDACTED]", sanitized)
+
 
 if __name__ == "__main__":
     unittest.main()
