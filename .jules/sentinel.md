@@ -12,3 +12,8 @@
 **Vulnerability:** The `_is_safe_ip` function lacked an explicit check for reserved IP addresses (e.g., `240.0.0.0/4`). This omission exposed the application to potential SSRF vulnerabilities targeting these non-global, but potentially routable or internally handled IP ranges that bypass the `is_private` check.
 **Learning:** Reserved IP addresses are not always covered by standard `is_private` or `is_global` properties and must be explicitly handled. The supported Python runtime exposes `is_reserved` on IP address objects, so use it directly to avoid fail-open behavior.
 **Prevention:** Explicitly check `ip.is_reserved` alongside other non-global IP checks when validating outbound destination IPs.
+
+## 2025-05-03 - Add missing Content-Type validation in fallback HTTP request branch
+**Vulnerability:** A missing Content-Type validation check existed in the retry block of the `_gh_get` function. While the main HTTP request block checked that `Content-Type` was one of the allowed types (e.g. `application/json`), the fallback request branch (executed when the cache returns a 304 without cached data) did not. This omission allowed processing of unexpected or potentially malicious content types.
+**Learning:** Security validations must be enforced consistently across all code paths, particularly in fallback, retry, and error-handling branches. Omitting checks in less frequently traversed paths creates defense-in-depth gaps that can be exploited if an attacker can trigger the fallback behavior.
+**Prevention:** Apply identical security validation and sanitization logic to both primary and fallback code paths. Abstracting shared validation logic into dedicated helper functions can further prevent such discrepancies.

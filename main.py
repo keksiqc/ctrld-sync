@@ -1523,6 +1523,15 @@ def _gh_get(url: str) -> dict:
                 with _gh.stream("GET", url, headers=headers) as r_retry:
                     r_retry.raise_for_status()
 
+                    # Security: Validate Content-Type in fallback branch
+                    content_type = r_retry.headers.get("Content-Type", "").lower()
+                    allowed_types = ["application/json", "text/json", "text/plain"]
+                    if not any(t in content_type for t in allowed_types):
+                        raise ValueError(
+                            f"Invalid Content-Type from {url}: {content_type}. "
+                            f"Expected one of: {', '.join(allowed_types)}"
+                        )
+
                     # 1. Check Content-Length header if present
                     cl = r_retry.headers.get("Content-Length")
                     if cl:
