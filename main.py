@@ -519,7 +519,7 @@ _UNSAFE_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 # Pre-compiled patterns for log sanitization
 _BASIC_AUTH_PATTERN = re.compile(r"://[^/@]+@")
 _SENSITIVE_PARAM_PATTERN = re.compile(
-    r"([?&#])(token|key|secret|password|auth|access_token|api_key)=[^&#\s]*",
+    r"([?&#])(token|key|secret|password|auth|access_token|api_key|authorization)=[^&#\s]*",
     flags=re.IGNORECASE,
 )
 
