@@ -254,9 +254,12 @@
 
 **Merged pull requests:**
 
+- 🛡️ Sentinel: \[CRITICAL/HIGH\] Fix Authorization Log Leakage [\#775](https://github.com/abhimehro/ctrld-sync/pull/775) ([abhimehro](https://github.com/abhimehro))
+- 🛡️ Sentinel: \[MEDIUM\] Add authorization parameter to log sanitization [\#774](https://github.com/abhimehro/ctrld-sync/pull/774) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: Improve CLI pluralization grammar [\#773](https://github.com/abhimehro/ctrld-sync/pull/773) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: Add empty state hint in main summary table [\#768](https://github.com/abhimehro/ctrld-sync/pull/768) ([abhimehro](https://github.com/abhimehro))
 - chore: Automated Daily QA Review [\#765](https://github.com/abhimehro/ctrld-sync/pull/765) ([abhimehro](https://github.com/abhimehro))
+- 🛡️ Sentinel: \[MEDIUM\] Fix missing Content-Type validation [\#763](https://github.com/abhimehro/ctrld-sync/pull/763) ([abhimehro](https://github.com/abhimehro))
 - ⚡ Bolt: Optimize rule safety validation fast path [\#762](https://github.com/abhimehro/ctrld-sync/pull/762) ([abhimehro](https://github.com/abhimehro))
 - Add ctrld-sync CLI testing skill [\#761](https://github.com/abhimehro/ctrld-sync/pull/761) ([abhimehro](https://github.com/abhimehro))
 - Add GitHub Actions workflow testing skill [\#757](https://github.com/abhimehro/ctrld-sync/pull/757) ([abhimehro](https://github.com/abhimehro))
