@@ -254,6 +254,7 @@
 
 **Merged pull requests:**
 
+- 🎨 Palette: Improve CLI pluralization grammar [\#773](https://github.com/abhimehro/ctrld-sync/pull/773) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: Add empty state hint in main summary table [\#768](https://github.com/abhimehro/ctrld-sync/pull/768) ([abhimehro](https://github.com/abhimehro))
 - chore: Automated Daily QA Review [\#765](https://github.com/abhimehro/ctrld-sync/pull/765) ([abhimehro](https://github.com/abhimehro))
 - ⚡ Bolt: Optimize rule safety validation fast path [\#762](https://github.com/abhimehro/ctrld-sync/pull/762) ([abhimehro](https://github.com/abhimehro))
