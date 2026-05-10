@@ -1,7 +1,6 @@
 import contextlib
 import os
 import re
-import stat
 import tempfile
 
 __all__ = ["fix_env", "clean_val", "escape_val"]
@@ -95,18 +94,15 @@ def fix_env():
     # Security: Write using os.open to a temp file, then os.replace to prevent TOCTOU
     # symlink attacks and ensure 0o600 permissions at creation time.
     # Use O_EXCL to prevent writing to an existing symlink or file.
+    temp_file = None
     try:
-        mode = stat.S_IRUSR | stat.S_IWUSR  # 0o600
-
-        # tempfile.mkstemp securely creates a unique file with O_CREAT | O_EXCL and 0o600 permissions
+        # tempfile.NamedTemporaryFile securely creates a unique file with O_CREAT | O_EXCL and 0o600 permissions
         # We specify dir="." to keep it on the same filesystem as .env for atomic os.replace
-        fd, temp_file = tempfile.mkstemp(prefix=".env.", suffix=".tmp", dir=".")
-
-        with os.fdopen(fd, "w") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, prefix=".env.", suffix=".tmp", dir=".", encoding="utf-8"
+        ) as f:
+            temp_file = f.name
             f.write(new_content)
-            # Enforce permissions on the file descriptor directly (safe against race conditions)
-            if os.name != "nt":
-                os.chmod(fd, mode)
 
         # Atomic replace
         os.replace(temp_file, ".env")
@@ -114,7 +110,7 @@ def fix_env():
     except OSError as e:
         print(f"Error writing .env: {e}")
         # Clean up temp file on error
-        if "temp_file" in locals() and os.path.exists(temp_file):
+        if temp_file and os.path.exists(temp_file):
             with contextlib.suppress(OSError):
                 os.unlink(temp_file)
         return

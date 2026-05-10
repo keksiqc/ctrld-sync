@@ -212,16 +212,20 @@ def save_disk_cache() -> None:
 
         cache_file = cache_dir / "blocklists.json"
 
-        # Security: use tempfile.mkstemp to securely create a unique temporary file
+        # Security: use tempfile.NamedTemporaryFile to securely create a unique temporary file
         # with O_CREAT | O_EXCL and 0o600 permissions, preventing predictable
         # temporary file vulnerabilities and TOCTOU races.
-        fd, temp_file_path_str = tempfile.mkstemp(
-            prefix="blocklists.", suffix=".tmp", dir=str(cache_dir)
-        )
-        temp_path = Path(temp_file_path_str)
-
+        temp_path = None
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                delete=False,
+                prefix="blocklists.",
+                suffix=".tmp",
+                dir=str(cache_dir),
+                encoding="utf-8",
+            ) as f:
+                temp_path = Path(f.name)
                 json.dump(_disk_cache, f, indent=2)
 
             # POSIX guarantees rename is atomic.
@@ -229,7 +233,7 @@ def save_disk_cache() -> None:
         finally:
             # Robust cleanup: Ensure temporary file is removed if it wasn't successfully renamed
             try:
-                if temp_path.exists():
+                if temp_path and temp_path.exists():
                     temp_path.unlink()
             except OSError:
                 pass
