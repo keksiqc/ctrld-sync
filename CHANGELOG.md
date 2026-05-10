@@ -29,6 +29,7 @@
 
 **Security fixes:**
 
+- \[Security\] Validated HIGH: Workflow command injection via AI-inference output in summary.yml [\#767](https://github.com/abhimehro/ctrld-sync/issues/767)
 - \[Code Quality\] Fix SECURITY.md placeholder content with accurate version info [\#358](https://github.com/abhimehro/ctrld-sync/issues/358)
 - \[Code Quality\] Update SECURITY.md with accurate version information [\#348](https://github.com/abhimehro/ctrld-sync/issues/348)
 - \[Code Quality\] Fix SECURITY.md placeholder content with actual version [\#339](https://github.com/abhimehro/ctrld-sync/issues/339)
@@ -258,6 +259,7 @@
 - 🛡️ Sentinel: \[CRITICAL/HIGH\] Fix Authorization Log Leakage [\#775](https://github.com/abhimehro/ctrld-sync/pull/775) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Add authorization parameter to log sanitization [\#774](https://github.com/abhimehro/ctrld-sync/pull/774) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: Improve CLI pluralization grammar [\#773](https://github.com/abhimehro/ctrld-sync/pull/773) ([abhimehro](https://github.com/abhimehro))
+- fix\(security\): prevent shell injection from AI-inference output in summary.yml [\#769](https://github.com/abhimehro/ctrld-sync/pull/769) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: Add empty state hint in main summary table [\#768](https://github.com/abhimehro/ctrld-sync/pull/768) ([abhimehro](https://github.com/abhimehro))
 - chore: Automated Daily QA Review [\#765](https://github.com/abhimehro/ctrld-sync/pull/765) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Fix missing Content-Type validation [\#763](https://github.com/abhimehro/ctrld-sync/pull/763) ([abhimehro](https://github.com/abhimehro))
