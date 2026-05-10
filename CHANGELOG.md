@@ -254,6 +254,7 @@
 
 **Merged pull requests:**
 
+- 🛡️ Sentinel: \[MEDIUM\] Replace mkstemp with NamedTemporaryFile [\#776](https://github.com/abhimehro/ctrld-sync/pull/776) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[CRITICAL/HIGH\] Fix Authorization Log Leakage [\#775](https://github.com/abhimehro/ctrld-sync/pull/775) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Add authorization parameter to log sanitization [\#774](https://github.com/abhimehro/ctrld-sync/pull/774) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: Improve CLI pluralization grammar [\#773](https://github.com/abhimehro/ctrld-sync/pull/773) ([abhimehro](https://github.com/abhimehro))
