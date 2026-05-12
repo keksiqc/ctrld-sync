@@ -99,7 +99,12 @@ def fix_env():
         # tempfile.NamedTemporaryFile securely creates a unique file with O_CREAT | O_EXCL and 0o600 permissions
         # We specify dir="." to keep it on the same filesystem as .env for atomic os.replace
         with tempfile.NamedTemporaryFile(
-            mode="w", delete=False, prefix=".env.", suffix=".tmp", dir=".", encoding="utf-8"
+            mode="w",
+            delete=False,
+            prefix=".env.",
+            suffix=".tmp",
+            dir=".",
+            encoding="utf-8",
         ) as f:
             temp_file = f.name
             f.write(new_content)
