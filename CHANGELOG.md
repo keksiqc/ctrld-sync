@@ -256,6 +256,7 @@
 
 **Merged pull requests:**
 
+- chore: auto-format fix\_env.py [\#785](https://github.com/abhimehro/ctrld-sync/pull/785) ([abhimehro](https://github.com/abhimehro))
 - chore: complete daily QA agentic review [\#779](https://github.com/abhimehro/ctrld-sync/pull/779) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Replace mkstemp with NamedTemporaryFile [\#776](https://github.com/abhimehro/ctrld-sync/pull/776) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[CRITICAL/HIGH\] Fix Authorization Log Leakage [\#775](https://github.com/abhimehro/ctrld-sync/pull/775) ([abhimehro](https://github.com/abhimehro))
