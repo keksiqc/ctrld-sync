@@ -256,6 +256,9 @@
 
 **Merged pull requests:**
 
+- 🛡️ Sentinel: \[MEDIUM\] Sanitize Content-Type header in exceptions [\#810](https://github.com/abhimehro/ctrld-sync/pull/810) ([abhimehro](https://github.com/abhimehro))
+- 🎨 Palette: Align plan details output [\#809](https://github.com/abhimehro/ctrld-sync/pull/809) ([abhimehro](https://github.com/abhimehro))
+- 🧹 Simplify deeply nested logic in \_retry\_request [\#808](https://github.com/abhimehro/ctrld-sync/pull/808) ([abhimehro](https://github.com/abhimehro))
 - chore: auto-format fix\_env.py [\#785](https://github.com/abhimehro/ctrld-sync/pull/785) ([abhimehro](https://github.com/abhimehro))
 - chore: complete daily QA agentic review [\#779](https://github.com/abhimehro/ctrld-sync/pull/779) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Replace mkstemp with NamedTemporaryFile [\#776](https://github.com/abhimehro/ctrld-sync/pull/776) ([abhimehro](https://github.com/abhimehro))
