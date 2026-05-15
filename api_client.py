@@ -215,6 +215,28 @@ def retry_with_jitter(
     return exponential_delay * random.random()
 
 
+def _log_debug_response(e: Exception) -> None:
+    """Log the response content if debug logging is enabled and response is present."""
+    if (
+        hasattr(e, "response")
+        and getattr(e, "response", None) is not None
+        and log.isEnabledFor(logging.DEBUG)
+    ):
+        log.debug(f"Response content: {_sanitize_fn(e.response.text)}")
+
+
+def _get_retry_after_seconds(response: httpx.Response) -> int | None:
+    """Extract and parse the Retry-After header as integer seconds, or None if missing/invalid."""
+    retry_after = response.headers.get("Retry-After")
+    if not retry_after:
+        return None
+    import contextlib
+
+    with contextlib.suppress(ValueError):
+        return int(retry_after)
+    return None
+
+
 def _retry_request(
     request_func: Callable[[], httpx.Response],
     max_retries: int = MAX_RETRIES,
@@ -258,23 +280,16 @@ def _retry_request(
 
                 # Handle 429 (Too Many Requests) with Retry-After
                 if code == 429:
-                    # Check for Retry-After header (in seconds)
-                    retry_after = e.response.headers.get("Retry-After")
-                    if retry_after:
-                        # Retry-After can be seconds or HTTP date format.
-                        # Only suppress ValueError from int() parsing; leave all other logic outside.
-                        wait_seconds: int | None = None
-                        with contextlib.suppress(ValueError):
-                            wait_seconds = int(retry_after)
-                        if wait_seconds is not None:
-                            log.warning(
-                                f"Rate limited (429). Server requests {wait_seconds}s wait "
-                                f"(attempt {attempt + 1}/{max_retries})"
-                            )
-                            if attempt < max_retries - 1:
-                                time.sleep(wait_seconds)
-                                continue  # Retry after waiting
-                            raise  # Max retries exceeded
+                    wait_seconds = _get_retry_after_seconds(e.response)
+                    if wait_seconds is not None:
+                        log.warning(
+                            f"Rate limited (429). Server requests {wait_seconds}s wait "
+                            f"(attempt {attempt + 1}/{max_retries})"
+                        )
+                        if attempt < max_retries - 1:
+                            time.sleep(wait_seconds)
+                            continue  # Retry after waiting
+                        raise  # Max retries exceeded
 
                 # Don't retry other 4xx errors (auth failures, bad requests, etc.)
                 if 400 <= code < 500 and code != 429:
@@ -284,12 +299,7 @@ def _retry_request(
                         f"API request failed with HTTP {code}{hint_suffix}: "
                         f"{_sanitize_fn(e)}"
                     )
-                    if (
-                        hasattr(e, "response")
-                        and e.response is not None
-                        and log.isEnabledFor(logging.DEBUG)
-                    ):
-                        log.debug(f"Response content: {_sanitize_fn(e.response.text)}")
+                    _log_debug_response(e)
                     raise
 
             if attempt == max_retries - 1:
