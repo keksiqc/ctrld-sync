@@ -1528,7 +1528,7 @@ def _gh_get(url: str) -> dict:
                     allowed_types = ["application/json", "text/json", "text/plain"]
                     if not any(t in content_type for t in allowed_types):
                         raise ValueError(
-                            f"Invalid Content-Type from {url}: {content_type}. "
+                            f"Invalid Content-Type from {sanitize_for_log(url)}: {sanitize_for_log(content_type)}. "
                             f"Expected one of: {', '.join(allowed_types)}"
                         )
 
@@ -1594,7 +1594,7 @@ def _gh_get(url: str) -> dict:
             allowed_types = ["application/json", "text/json", "text/plain"]
             if not any(t in content_type for t in allowed_types):
                 raise ValueError(
-                    f"Invalid Content-Type from {sanitize_for_log(url)}: {content_type}. "
+                    f"Invalid Content-Type from {sanitize_for_log(url)}: {sanitize_for_log(content_type)}. "
                     f"Expected one of: {', '.join(allowed_types)}"
                 )
 
