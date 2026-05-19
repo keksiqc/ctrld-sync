@@ -1115,6 +1115,29 @@ def _is_safe_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     return ip.is_global
 
 
+def _resolve_and_validate_domain(hostname: str) -> bool:
+    try:
+        # Resolve hostname to IPs (IPv4 and IPv6)
+        # We filter for AF_INET/AF_INET6 to ensure we get IP addresses
+        addr_info = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+        for res in addr_info:
+            # res is (family, type, proto, canonname, sockaddr)
+            # sockaddr is (address, port) for AF_INET/AF_INET6
+            ip_str = res[4][0]
+            ip = ipaddress.ip_address(ip_str)
+            if not _is_safe_ip(ip):
+                log.warning(
+                    f"Skipping unsafe hostname {sanitize_for_log(hostname)} (resolves to non-global/multicast IP {ip})"
+                )
+                return False
+        return True
+    except (socket.gaierror, ValueError, OSError) as e:
+        log.warning(
+            f"Failed to resolve/validate domain {sanitize_for_log(hostname)}: {sanitize_for_log(e)}"
+        )
+        return False
+
+
 @lru_cache(maxsize=128)
 def validate_hostname(hostname: str) -> bool:
     """
@@ -1142,26 +1165,7 @@ def validate_hostname(hostname: str) -> bool:
         return True
     except ValueError:
         # Not an IP literal, it's a domain. Resolve and check IPs.
-        try:
-            # Resolve hostname to IPs (IPv4 and IPv6)
-            # We filter for AF_INET/AF_INET6 to ensure we get IP addresses
-            addr_info = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
-            for res in addr_info:
-                # res is (family, type, proto, canonname, sockaddr)
-                # sockaddr is (address, port) for AF_INET/AF_INET6
-                ip_str = res[4][0]
-                ip = ipaddress.ip_address(ip_str)
-                if not _is_safe_ip(ip):
-                    log.warning(
-                        f"Skipping unsafe hostname {sanitize_for_log(hostname)} (resolves to non-global/multicast IP {ip})"
-                    )
-                    return False
-            return True
-        except (socket.gaierror, ValueError, OSError) as e:
-            log.warning(
-                f"Failed to resolve/validate domain {sanitize_for_log(hostname)}: {sanitize_for_log(e)}"
-            )
-            return False
+        return _resolve_and_validate_domain(hostname)
 
 
 @lru_cache(maxsize=128)
