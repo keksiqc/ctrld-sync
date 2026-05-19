@@ -1740,6 +1740,75 @@ def list_existing_folders(client: httpx.Client, profile_id: str) -> dict[str, st
         return {}
 
 
+def _parse_folders_response(data: dict) -> dict[str, str] | None:
+    # Ensure we got the expected top-level JSON structure.
+    if not isinstance(data, dict):
+        log.error(
+            "Failed to parse folders data: expected JSON object at top level, "
+            f"got {type(data).__name__}"
+        )
+        return None
+
+    body = data.get("body")
+    if not isinstance(body, dict):
+        log.error(
+            "Failed to parse folders data: expected 'body' to be an object, "
+            f"got {type(body).__name__ if body is not None else 'None'}"
+        )
+        return None
+
+    folders = body.get("groups", [])
+    if not isinstance(folders, list):
+        log.error(
+            "Failed to parse folders data: expected 'body[\"groups\"]' to be a list, "
+            f"got {type(folders).__name__}"
+        )
+        return None
+
+    # Only process entries that are dicts and have the required keys.
+    result: dict[str, str] = {}
+    for f in folders:
+        if not isinstance(f, dict):
+            continue
+        name = f.get("group")
+        pk = f.get("PK")
+        # Skip entries with empty or None values for required fields
+        if not name or not pk:
+            continue
+
+        pk_str = str(pk)
+        if not validate_folder_id(pk_str):
+            continue
+
+        result[str(name).strip()] = pk_str
+
+    return result
+
+
+def _log_auth_error(code: int, profile_id: str) -> None:
+    if code == 401:
+        log.critical(
+            f"{Colors.FAIL}❌ Authentication Failed: The API Token is invalid.{Colors.ENDC}"
+        )
+        log.critical(
+            f"{Colors.FAIL}   Please check your token at: https://controld.com/account/manage-account{Colors.ENDC}"
+        )
+    elif code == 403:
+        log.critical(
+            "%s🚫 Access Denied: Token lacks permission for Profile %s.%s",
+            Colors.FAIL,
+            sanitize_for_log(profile_id),
+            Colors.ENDC,
+        )
+    elif code == 404:
+        log.critical(
+            f"{Colors.FAIL}🔍 Profile Not Found: The ID '{sanitize_for_log(profile_id)}' does not exist.{Colors.ENDC}"
+        )
+        log.critical(
+            f"{Colors.FAIL}   Please verify the Profile ID from your Control D Dashboard URL.{Colors.ENDC}"
+        )
+
+
 def verify_access_and_get_folders(
     client: httpx.Client, profile_id: str
 ) -> dict[str, str] | None:
@@ -1757,85 +1826,15 @@ def verify_access_and_get_folders(
             resp.raise_for_status()
 
             try:
-                data = resp.json()
-
-                # Ensure we got the expected top-level JSON structure.
-                # We defensively validate types here so that unexpected but valid
-                # JSON (e.g., a list or a scalar) doesn't cause AttributeError/TypeError
-                # and cause the operation to fail unexpectedly.
-                if not isinstance(data, dict):
-                    log.error(
-                        "Failed to parse folders data: expected JSON object at top level, "
-                        f"got {type(data).__name__}"
-                    )
-                    return None
-
-                body = data.get("body")
-                if not isinstance(body, dict):
-                    log.error(
-                        "Failed to parse folders data: expected 'body' to be an object, "
-                        f"got {type(body).__name__ if body is not None else 'None'}"
-                    )
-                    return None
-
-                folders = body.get("groups", [])
-                if not isinstance(folders, list):
-                    log.error(
-                        "Failed to parse folders data: expected 'body[\"groups\"]' to be a list, "
-                        f"got {type(folders).__name__}"
-                    )
-                    return None
-
-                # Only process entries that are dicts and have the required keys.
-                result: dict[str, str] = {}
-                for f in folders:
-                    if not isinstance(f, dict):
-                        # Skip non-dict entries instead of crashing; this protects
-                        # against partial data corruption or unexpected API changes.
-                        continue
-                    name = f.get("group")
-                    pk = f.get("PK")
-                    # Skip entries with empty or None values for required fields
-                    if not name or not pk:
-                        continue
-
-                    pk_str = str(pk)
-                    if not validate_folder_id(pk_str):
-                        continue
-
-                    result[str(name).strip()] = pk_str
-
-                return result
+                return _parse_folders_response(resp.json())
             except (ValueError, TypeError, AttributeError) as err:
-                # As a final safeguard, catch any remaining parsing/shape errors so
-                # that a malformed response cannot crash the caller.
                 log.error("Failed to parse folders data: %s", sanitize_for_log(err))
                 return None
 
         except httpx.HTTPStatusError as e:
             code = e.response.status_code
             if code in (401, 403, 404):
-                if code == 401:
-                    log.critical(
-                        f"{Colors.FAIL}❌ Authentication Failed: The API Token is invalid.{Colors.ENDC}"
-                    )
-                    log.critical(
-                        f"{Colors.FAIL}   Please check your token at: https://controld.com/account/manage-account{Colors.ENDC}"
-                    )
-                elif code == 403:
-                    log.critical(
-                        "%s🚫 Access Denied: Token lacks permission for Profile %s.%s",
-                        Colors.FAIL,
-                        sanitize_for_log(profile_id),
-                        Colors.ENDC,
-                    )
-                elif code == 404:
-                    log.critical(
-                        f"{Colors.FAIL}🔍 Profile Not Found: The ID '{sanitize_for_log(profile_id)}' does not exist.{Colors.ENDC}"
-                    )
-                    log.critical(
-                        f"{Colors.FAIL}   Please verify the Profile ID from your Control D Dashboard URL.{Colors.ENDC}"
-                    )
+                _log_auth_error(code, profile_id)
                 return None
 
             if attempt == MAX_RETRIES - 1:
