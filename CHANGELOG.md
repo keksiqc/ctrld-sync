@@ -256,6 +256,7 @@
 
 **Merged pull requests:**
 
+- Jules Daily QA & Agentic Review [\#814](https://github.com/abhimehro/ctrld-sync/pull/814) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Sanitize Content-Type header in exceptions [\#810](https://github.com/abhimehro/ctrld-sync/pull/810) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: Align plan details output [\#809](https://github.com/abhimehro/ctrld-sync/pull/809) ([abhimehro](https://github.com/abhimehro))
 - 🧹 Simplify deeply nested logic in \_retry\_request [\#808](https://github.com/abhimehro/ctrld-sync/pull/808) ([abhimehro](https://github.com/abhimehro))
