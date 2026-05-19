@@ -630,3 +630,29 @@ class TestGetPasswordHint:
         assert prompt.count("(typing will be hidden)") == 1, (
             f"hint should not be duplicated, got: {prompt!r}"
         )
+
+def test_print_plan_details_dry_run_placeholder(monkeypatch, capsys):
+    monkeypatch.setattr(main, "USE_COLORS", False)
+    plan_entry = {"profile": "dry-run-placeholder", "folders": []}
+    main.print_plan_details(plan_entry)
+    captured = capsys.readouterr()
+    assert "Plan Details for (Unspecified):" in captured.out
+
+def test_print_summary_table_dry_run_placeholder(monkeypatch, capsys):
+    monkeypatch.setattr(main, "USE_COLORS", False)
+    from main import SyncResult
+    sync_results = [
+        SyncResult(
+            profile="dry-run-placeholder",
+            folders=1,
+            rules=10,
+            duration=0.5,
+            status_label="ok",
+            success=True,
+        )
+    ]
+    main.print_summary_table(
+        sync_results=sync_results, success_count=1, total=1, dry_run=True
+    )
+    captured = capsys.readouterr()
+    assert "(Unspecified)" in captured.out

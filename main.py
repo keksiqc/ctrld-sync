@@ -580,6 +580,8 @@ def pluralize(count: int, singular: str, plural: str | None = None) -> str:
 def print_plan_details(plan_entry: PlanEntry) -> None:
     """Pretty-print the folder-level breakdown during a dry-run."""
     profile = sanitize_for_log(plan_entry.get("profile", "unknown"))
+    if profile == "dry-run-placeholder":
+        profile = "(Unspecified)"
     folders = plan_entry.get("folders", [])
 
     if USE_COLORS:
@@ -2761,8 +2763,9 @@ def print_summary_table(
             f"\n{('DRY RUN' if dry_run else 'SYNC') + ' SUMMARY':^{len(header)}}\n{sep}\n{header}\n{sep}"
         )
         for r in sync_results:
+            display_profile = "(Unspecified)" if r['profile'] == "dry-run-placeholder" else r['profile']
             print(
-                f"{r['profile']:<{w[0]}} | {r['folders']:>{w[1]}} | {r['rules']:>{w[2]},} | {r['duration']:>{w[3] - 1}.1f}s | {r['status_label']:<{w[4]}}"
+                f"{display_profile:<{w[0]}} | {r['folders']:>{w[1]}} | {r['rules']:>{w[2]},} | {r['duration']:>{w[3] - 1}.1f}s | {r['status_label']:<{w[4]}}"
             )
         print(
             f"{sep}\n{'TOTAL':<{w[0]}} | {t_f:>{w[1]}} | {t_r:>{w[2]},} | {t_d:>{w[3] - 1}.1f}s | {t_status:<{w[4]}}\n{sep}\n"
@@ -3192,8 +3195,9 @@ def main() -> None:
         s_rules = f"{res['rules']:,}"
         s_duration = f"{res['duration']:.1f}s"
 
+        display_profile = "(Unspecified)" if res["profile"] == "dry-run-placeholder" else res["profile"]
         print(
-            f"{Box.V} {res['profile']:<{w_profile}} "
+            f"{Box.V} {display_profile:<{w_profile}} "
             f"{Box.V} {s_folders:>{w_folders}} "
             f"{Box.V} {s_rules:>{w_rules}} "
             f"{Box.V} {s_duration:>{w_duration}} "

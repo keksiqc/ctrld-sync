@@ -50,3 +50,8 @@
 ## 2024-04-15 - Semantic Emojis in No-Color Fallbacks
 **Learning:** When stripping ANSI colors for fallback modes (e.g., `NO_COLOR=1` or non-TTY environments), it's a common mistake to accidentally strip semantic emojis along with the color formatting. Emojis provide vital scannability and context that users rely on when color cues are absent.
 **Action:** Always ensure that `if USE_COLORS` else blocks preserve emojis in the uncolored strings. Never treat emojis as part of the "color decoration" to be discarded.
+
+## 2025-05-18 - [CLI Empty State UI]
+
+**Learning:** When displaying data tables or CLI interfaces that fall back to placeholders for empty or unsaved state (e.g., `dry-run-placeholder` internally used when no profile is given), leaking the literal placeholder string creates an unpolished and confusing UX.
+**Action:** Always intercept placeholder constants at the UI boundary and render them as clean, human-readable strings like `(Unspecified)` or `(None)`.
