@@ -1235,16 +1235,20 @@ def validate_profile_id(profile_id: str, log_errors: bool = True) -> bool:
     Returns True if profile ID is valid, False otherwise.
     Logs specific validation errors when log_errors=True.
     """
-    if not is_valid_profile_id_format(profile_id):
-        if log_errors:
-            if not PROFILE_ID_PATTERN.match(profile_id):
-                log.error("Invalid profile ID format (contains unsafe characters)")
-            elif len(profile_id) > MAX_PROFILE_ID_LENGTH:
-                log.error(
-                    f"Invalid profile ID length (max {MAX_PROFILE_ID_LENGTH} chars)"
-                )
-        return False
-    return True
+    if is_valid_profile_id_format(profile_id):
+        return True
+
+    if not PROFILE_ID_PATTERN.match(profile_id):
+        return _log_validation_error(
+            "Invalid profile ID format (contains unsafe characters)", log_errors
+        )
+
+    if len(profile_id) > MAX_PROFILE_ID_LENGTH:
+        return _log_validation_error(
+            f"Invalid profile ID length (max {MAX_PROFILE_ID_LENGTH} chars)", log_errors
+        )
+
+    return False
 
 
 def _log_validation_error(msg: str, log_errors: bool) -> bool:
