@@ -1,6 +1,6 @@
 {
-  "title": "🛡️ Sentinel: [MEDIUM] Replace mkstemp with NamedTemporaryFile",
-  "head": "fix-tempfile-security",
+  "title": "🧹 Refactor: extract logic from fix_env",
+  "head": "refactor/fix-env",
   "base": "main",
-  "body": "**Severity:** MEDIUM\n**Vulnerability:** The use of `tempfile.mkstemp` combined with manual file descriptor handling is error-prone and less readable, while `tempfile.NamedTemporaryFile` inherently provides secure file creation with 0o600 permissions.\n**Impact:** Prevents potential TOCTOU (Time-of-Check to Time-of-Use) vulnerabilities and symlink attacks during atomic file replacement.\n**Fix:** Migrated to `tempfile.NamedTemporaryFile(delete=False)` for atomic, secure file creation in `fix_env.py` and `cache.py`.\n**Verification:** Ran `uv run pytest tests/` to confirm functionality remains intact."
+  "body": "🎯 **What:** Extract logic from `fix_env` to smaller helper methods `_parse_env_content`, `_resolve_assignments`, and `_write_env_securely`.\n💡 **Why:** Reduces cyclomatic complexity and improves readability of `fix_env.py` without changing behavior.\n✅ **Verification:** Verified by checking format using `ruff format` and `ruff check`, and full test execution via `uv run pytest`.\n✨ **Result:** Improved maintainability and modularity of the script."
 }
