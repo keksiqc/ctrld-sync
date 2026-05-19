@@ -2470,6 +2470,176 @@ def _process_single_folder(
 # --------------------------------------------------------------------------- #
 # 4. Main workflow
 # --------------------------------------------------------------------------- #
+def _fetch_all_folder_data(folder_urls: Sequence[str]) -> list[FolderData] | None:
+    """Fetches folder data for all URLs in parallel."""
+    folder_data_list: list[FolderData] = []
+
+    # OPTIMIZATION: Move validation inside the thread pool to parallelize DNS lookups.
+    # Previously, sequential validation blocked the main thread.
+    def _fetch_if_valid(url: str):
+        # Optimization: If we already have the content in cache, return it directly.
+        # The content was validated at the time of fetch (warm_up_cache).
+        # Read directly from cache to avoid calling fetch_folder_data while holding lock.
+        with _cache_lock:
+            if (cached := _cache.get(url)) is not None:
+                return cached
+
+        if validate_folder_url(url):
+            return fetch_folder_data(url)
+        return None
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_url = {
+            executor.submit(_fetch_if_valid, url): url for url in folder_urls
+        }
+
+        for future in concurrent.futures.as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                result = future.result()
+                if result:
+                    folder_data_list.append(result)
+            except (httpx.HTTPError, KeyError, ValueError) as e:
+                log.error(
+                    f"Failed to fetch folder data from {sanitize_for_log(url)}: {sanitize_for_log(e)}"
+                )
+                continue
+
+    if not folder_data_list:
+        log.error("No valid folder data found")
+        hint_message = (
+            "💡 Hint: Check your --folder-url flags or your config file "
+            "(see --config, config.yaml, or config.yml) for typos or unreachable URLs"
+        )
+        if USE_COLORS:
+            log.warning(f"{Colors.DIM}{hint_message}{Colors.ENDC}")
+        else:
+            log.warning(hint_message)
+        return None
+
+    return folder_data_list
+
+
+def _build_plan_entry(profile_id: str, folder_data_list: list[FolderData]) -> PlanEntry:
+    """Builds the plan entry for a given profile."""
+    plan_entry: PlanEntry = {"profile": profile_id, "folders": []}
+    for folder_data in folder_data_list:
+        grp = folder_data["group"]
+        name = grp["group"].strip()
+
+        if "rule_groups" in folder_data:
+            # Multi-action format
+            total_rules = sum(
+                len(rg.get("rules", [])) for rg in folder_data["rule_groups"]
+            )
+            plan_entry["folders"].append(
+                {
+                    "name": name,
+                    "rules": total_rules,
+                    "rule_groups": [
+                        {
+                            "rules": len(rg.get("rules", [])),
+                            "action": rg.get("action", {}).get("do"),
+                            "status": rg.get("action", {}).get("status"),
+                        }
+                        for rg in folder_data["rule_groups"]
+                    ],
+                }
+            )
+        else:
+            # Legacy single-action format
+            # OPTIMIZATION: Count valid rules via generator to avoid an intermediate list and lower peak memory use.
+            rules_count = sum(1 for r in folder_data.get("rules", []) if r.get("PK"))
+            plan_entry["folders"].append(
+                {
+                    "name": name,
+                    "rules": rules_count,
+                    "action": grp.get("action", {}).get("do"),
+                    "status": grp.get("action", {}).get("status"),
+                }
+            )
+    return plan_entry
+
+
+def _prepare_folders_and_rules(
+    client: httpx.Client,
+    profile_id: str,
+    folder_data_list: list[FolderData],
+    no_delete: bool,
+    shared_executor: concurrent.futures.ThreadPoolExecutor,
+) -> tuple[dict[str, str] | None, set[str]]:
+    """
+    Verifies access, deletes old folders, and fetches existing rules in background.
+    """
+    # Verify access and list existing folders in one request
+    existing_folders = verify_access_and_get_folders(client, profile_id)
+    if existing_folders is None:
+        return None, set()
+
+    # Identify folders to delete and folders to keep (scan)
+    folders_to_delete = []
+    folders_to_scan = existing_folders.copy()
+
+    if not no_delete:
+        for folder_data in folder_data_list:
+            name = folder_data["group"]["group"].strip()
+            if name in existing_folders:
+                folders_to_delete.append((name, existing_folders[name]))
+                # OPTIMIZATION: Use dict.pop() to avoid a redundant dictionary lookup.
+                folders_to_scan.pop(name, None)
+
+    # Start fetching rules from kept folders in background (parallel to deletions)
+    existing_rules_future = shared_executor.submit(
+        get_all_existing_rules, client, profile_id, folders_to_scan
+    )
+
+    if not no_delete:
+        deletion_occurred = False
+        if folders_to_delete:
+            # Parallel delete to speed up the "clean slate" phase
+            # Use shared_executor (3 workers)
+            future_to_name = {
+                shared_executor.submit(
+                    delete_folder, client, profile_id, name, folder_id
+                ): name
+                for name, folder_id in folders_to_delete
+            }
+
+            for future in concurrent.futures.as_completed(future_to_name):
+                name = future_to_name[future]
+                try:
+                    if future.result():
+                        del existing_folders[name]
+                        deletion_occurred = True
+                except Exception as exc:
+                    # Sanitize both name and exception to prevent log injection
+                    log.error(
+                        "Failed to delete folder %s: %s",
+                        sanitize_for_log(name),
+                        sanitize_for_log(exc),
+                    )
+
+        # CRITICAL FIX: Increased wait time for massive folders to clear
+        if deletion_occurred:
+            if not USE_COLORS:
+                log.info(
+                    "Waiting 60s for deletions to propagate (prevents 'Badware Hoster' zombie state)..."
+                )
+            countdown_timer(60, "Waiting for deletions to propagate")
+
+    # Retrieve result from background task
+    # If deletion occurred, we effectively used the wait time to fetch rules!
+    try:
+        existing_rules = existing_rules_future.result()
+    except Exception as e:
+        log.error(
+            f"Failed to fetch existing rules in background: {sanitize_for_log(e)}"
+        )
+        existing_rules = set()
+
+    return existing_folders, existing_rules
+
+
 def sync_profile(
     profile_id: str,
     folder_urls: Sequence[str],
@@ -2491,91 +2661,12 @@ def sync_profile(
     validate_hostname.cache_clear()
 
     try:
-        # Fetch all folder data first
-        folder_data_list = []
-
-        # OPTIMIZATION: Move validation inside the thread pool to parallelize DNS lookups.
-        # Previously, sequential validation blocked the main thread.
-        def _fetch_if_valid(url: str):
-            # Optimization: If we already have the content in cache, return it directly.
-            # The content was validated at the time of fetch (warm_up_cache).
-            # Read directly from cache to avoid calling fetch_folder_data while holding lock.
-            with _cache_lock:
-                if (cached := _cache.get(url)) is not None:
-                    return cached
-
-            if validate_folder_url(url):
-                return fetch_folder_data(url)
-            return None
-
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_to_url = {
-                executor.submit(_fetch_if_valid, url): url for url in folder_urls
-            }
-
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    result = future.result()
-                    if result:
-                        folder_data_list.append(result)
-                except (httpx.HTTPError, KeyError, ValueError) as e:
-                    log.error(
-                        f"Failed to fetch folder data from {sanitize_for_log(url)}: {sanitize_for_log(e)}"
-                    )
-                    continue
-
-        if not folder_data_list:
-            log.error("No valid folder data found")
-            hint_message = (
-                "💡 Hint: Check your --folder-url flags or your config file "
-                "(see --config, config.yaml, or config.yml) for typos or unreachable URLs"
-            )
-            if USE_COLORS:
-                log.warning(f"{Colors.DIM}{hint_message}{Colors.ENDC}")
-            else:
-                log.warning(hint_message)
+        folder_data_list = _fetch_all_folder_data(folder_urls)
+        if folder_data_list is None:
             return False
 
         # Build plan entries
-        plan_entry: PlanEntry = {"profile": profile_id, "folders": []}
-        for folder_data in folder_data_list:
-            grp = folder_data["group"]
-            name = grp["group"].strip()
-
-            if "rule_groups" in folder_data:
-                # Multi-action format
-                total_rules = sum(
-                    len(rg.get("rules", [])) for rg in folder_data["rule_groups"]
-                )
-                plan_entry["folders"].append(
-                    {
-                        "name": name,
-                        "rules": total_rules,
-                        "rule_groups": [
-                            {
-                                "rules": len(rg.get("rules", [])),
-                                "action": rg.get("action", {}).get("do"),
-                                "status": rg.get("action", {}).get("status"),
-                            }
-                            for rg in folder_data["rule_groups"]
-                        ],
-                    }
-                )
-            else:
-                # Legacy single-action format
-                # OPTIMIZATION: Count valid rules via generator to avoid an intermediate list and lower peak memory use.
-                rules_count = sum(
-                    1 for r in folder_data.get("rules", []) if r.get("PK")
-                )
-                plan_entry["folders"].append(
-                    {
-                        "name": name,
-                        "rules": rules_count,
-                        "action": grp.get("action", {}).get("do"),
-                        "status": grp.get("action", {}).get("status"),
-                    }
-                )
+        plan_entry = _build_plan_entry(profile_id, folder_data_list)
 
         if plan_accumulator is not None:
             plan_accumulator.append(plan_entry)
@@ -2600,71 +2691,12 @@ def sync_profile(
             ) as shared_executor,
             _api_client() as client,
         ):
-            # Verify access and list existing folders in one request
-            existing_folders = verify_access_and_get_folders(client, profile_id)
-            if existing_folders is None:
-                return False
-
-            # Identify folders to delete and folders to keep (scan)
-            folders_to_delete = []
-            folders_to_scan = existing_folders.copy()
-
-            if not no_delete:
-                for folder_data in folder_data_list:
-                    name = folder_data["group"]["group"].strip()
-                    if name in existing_folders:
-                        folders_to_delete.append((name, existing_folders[name]))
-                        # OPTIMIZATION: Use dict.pop() to avoid a redundant dictionary lookup.
-                        folders_to_scan.pop(name, None)
-
-            # Start fetching rules from kept folders in background (parallel to deletions)
-            existing_rules_future = shared_executor.submit(
-                get_all_existing_rules, client, profile_id, folders_to_scan
+            existing_folders_and_rules = _prepare_folders_and_rules(
+                client, profile_id, folder_data_list, no_delete, shared_executor
             )
-
-            if not no_delete:
-                deletion_occurred = False
-                if folders_to_delete:
-                    # Parallel delete to speed up the "clean slate" phase
-                    # Use shared_executor (3 workers)
-                    future_to_name = {
-                        shared_executor.submit(
-                            delete_folder, client, profile_id, name, folder_id
-                        ): name
-                        for name, folder_id in folders_to_delete
-                    }
-
-                    for future in concurrent.futures.as_completed(future_to_name):
-                        name = future_to_name[future]
-                        try:
-                            if future.result():
-                                del existing_folders[name]
-                                deletion_occurred = True
-                        except Exception as exc:
-                            # Sanitize both name and exception to prevent log injection
-                            log.error(
-                                "Failed to delete folder %s: %s",
-                                sanitize_for_log(name),
-                                sanitize_for_log(exc),
-                            )
-
-                # CRITICAL FIX: Increased wait time for massive folders to clear
-                if deletion_occurred:
-                    if not USE_COLORS:
-                        log.info(
-                            "Waiting 60s for deletions to propagate (prevents 'Badware Hoster' zombie state)..."
-                        )
-                    countdown_timer(60, "Waiting for deletions to propagate")
-
-            # Retrieve result from background task
-            # If deletion occurred, we effectively used the wait time to fetch rules!
-            try:
-                existing_rules = existing_rules_future.result()
-            except Exception as e:
-                log.error(
-                    f"Failed to fetch existing rules in background: {sanitize_for_log(e)}"
-                )
-                existing_rules = set()
+            if existing_folders_and_rules[0] is None:
+                return False
+            existing_folders, existing_rules = existing_folders_and_rules
 
             ctx = SyncContext(
                 profile_id=profile_id,

@@ -1,0 +1,6 @@
+{
+  "title": "🧹 Refactor: Extract helper functions from sync_profile",
+  "head": "jules-6223985617443445838-52b9cd39",
+  "base": "main",
+  "body": "🎯 **What:** Extracted three helper functions (`_fetch_all_folder_data`, `_build_plan_entry`, and `_prepare_folders_and_rules`) from the complex `sync_profile` function.\n\n💡 **Why:** `sync_profile` was too long and had high cyclomatic complexity, making it difficult to read and maintain. Breaking it down into logical sub-steps improves code health and modularity.\n\n✅ **Verification:** Ran `uv run pytest` (369 passing tests), `uv run mypy .` (no type errors), and `uv tool run ruff check .` and `uv tool run ruff format .`.\n\n✨ **Result:** The `sync_profile` function is significantly shorter and more readable without altering any functionality.\n\n===== ELIR =====\nPURPOSE: Refactor `sync_profile` into smaller functions.\nSECURITY: No security implications as no functionality was altered.\nFAILS IF: Extracted logic behaves differently, which was tested extensively via test suite.\nVERIFY: Review functionality mapping between extracted functions and the previous unified code.\nMAINTAIN: The extraction was mechanical and semantic, keep an eye out for more extraction opportunities in `sync_profile`."
+}
