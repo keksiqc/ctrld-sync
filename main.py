@@ -2166,31 +2166,18 @@ def create_folder(ctx: SyncContext, name: str, action: RuleAction) -> str | None
         return None
 
 
-def push_rules(
-    ctx: SyncContext,
-    folder_name: str,
-    folder_id: str,
-    action: RuleAction,
+
+def _filter_rules_for_folder(
+    existing_rules: set[str],
     hostnames: list[str],
-) -> bool:
+    folder_name: str,
+) -> list[str]:
     """
-    Pushes rules to a folder in batches, filtering duplicates and invalid rules.
-
-    Deduplicates input, validates rules against _ALLOWED_RULE_CHARS, and sends batches
-    in parallel for optimal performance. Updates ctx.existing_rules set with newly
-    added rules. Returns True if all batches succeed.
+    Deduplicates and filters hostnames, logging dropped entries.
     """
-    if not hostnames:
-        log.info("Folder %s - no rules to push", sanitize_for_log(folder_name))
-        return True
-
     original_count = len(hostnames)
 
     # Optimization 1: Deduplicate and filter existing rules in a C-speed dict comprehension.
-    # This completely avoids copying the potentially massive existing_rules set
-    # (which could be millions of items) for every folder processed, and is up
-    # to 2x faster than a manual loop due to avoiding Python interpreter overhead.
-    existing_rules = ctx.existing_rules
     if not existing_rules:
         unique_hostnames_dict = dict.fromkeys(hostnames)
     else:
@@ -2223,20 +2210,76 @@ def push_rules(
             f"Folder {sanitize_for_log(folder_name)}: skipping {duplicates_count} duplicate {pluralize(duplicates_count, 'rule')}"
         )
 
-    if not filtered_hostnames:
-        log.info(
-            f"Folder {sanitize_for_log(folder_name)} - no new rules to push after filtering duplicates"
+    return filtered_hostnames
+
+
+def _push_single_batch(
+    client: httpx.Client,
+    profile_id: str,
+    sanitized_folder_name: str,
+    str_do: str,
+    str_status: str,
+    str_group: str,
+    batch_idx: int,
+    batch_data: list[str],
+) -> list[str] | None:
+    """Processes a single batch of rules by sending API request."""
+    data = {
+        "do": str_do,
+        "status": str_status,
+        "group": str_group,
+    }
+    # Optimization: Use pre-calculated keys and zip for faster dict update
+    # strict=False is intentional: batch_data may be shorter than BATCH_KEYS for final batch
+    data.update(zip(BATCH_KEYS, batch_data, strict=False))
+
+    try:
+        _api_post_form(client, f"{API_BASE}/{profile_id}/rules", data=data)
+        if not USE_COLORS:
+            log.info(
+                "Folder %s – batch %d: added %d %s",
+                sanitized_folder_name,
+                batch_idx,
+                len(batch_data),
+                pluralize(len(batch_data), "rule"),
+            )
+        return batch_data
+    except httpx.HTTPError as e:
+        if USE_COLORS:
+            sys.stderr.write("\r\033[K")
+            sys.stderr.flush()
+        hint = ""
+        if isinstance(e, httpx.HTTPStatusError):
+            # Use a more specific name to avoid confusion with the rule "status" payload
+            status_code = e.response.status_code
+            hint = f" ({_STATUS_HINTS.get(status_code, f'HTTP {status_code}')})"
+        log.error(
+            f"Failed to push batch {batch_idx} for folder {sanitized_folder_name}{hint}: {sanitize_for_log(e)}"
         )
-        return True
+        if (
+            hasattr(e, "response")
+            and e.response is not None
+            and log.isEnabledFor(logging.DEBUG)
+        ):
+            log.debug(f"Response content: {sanitize_for_log(e.response.text)}")
+        return None
 
+
+def _push_rule_batches(
+    ctx: SyncContext,
+    folder_name: str,
+    folder_id: str,
+    action: RuleAction,
+    filtered_hostnames: list[str],
+) -> bool:
+    """
+    Splits rules into batches and pushes them to the API in parallel.
+    """
     successful_batches = 0
-
-    # Prepare batches
     batches = [
         filtered_hostnames[start : start + BATCH_SIZE]
         for start in range(0, len(filtered_hostnames), BATCH_SIZE)
     ]
-
     total_batches = len(batches)
 
     # Optimization: Hoist loop invariants to avoid redundant computations
@@ -2246,53 +2289,18 @@ def push_rules(
     sanitized_folder_name = sanitize_for_log(folder_name)
     progress_label = f"Folder {sanitized_folder_name}"
 
-    def process_batch(batch_idx: int, batch_data: list[str]) -> list[str] | None:
-        """Processes a single batch of rules by sending API request."""
-        data = {
-            "do": str_do,
-            "status": str_status,
-            "group": str_group,
-        }
-        # Optimization: Use pre-calculated keys and zip for faster dict update
-        # strict=False is intentional: batch_data may be shorter than BATCH_KEYS for final batch
-        data.update(zip(BATCH_KEYS, batch_data, strict=False))
-
-        try:
-            _api_post_form(ctx.client, f"{API_BASE}/{ctx.profile_id}/rules", data=data)
-            if not USE_COLORS:
-                log.info(
-                    "Folder %s – batch %d: added %d %s",
-                    sanitized_folder_name,
-                    batch_idx,
-                    len(batch_data),
-                    pluralize(len(batch_data), "rule"),
-                )
-            return batch_data
-        except httpx.HTTPError as e:
-            if USE_COLORS:
-                sys.stderr.write("\r\033[K")
-                sys.stderr.flush()
-            hint = ""
-            if isinstance(e, httpx.HTTPStatusError):
-                # Use a more specific name to avoid confusion with the rule "status" payload
-                status_code = e.response.status_code
-                hint = f" ({_STATUS_HINTS.get(status_code, f'HTTP {status_code}')})"
-            log.error(
-                f"Failed to push batch {batch_idx} for folder {sanitized_folder_name}{hint}: {sanitize_for_log(e)}"
-            )
-            if (
-                hasattr(e, "response")
-                and e.response is not None
-                and log.isEnabledFor(logging.DEBUG)
-            ):
-                log.debug(f"Response content: {sanitize_for_log(e.response.text)}")
-            return None
-
     # Optimization 3: Parallelize batch processing
-    # Using 3 workers to speed up writes without hitting aggressive rate limits.
-    # If only 1 batch, run it synchronously to avoid ThreadPoolExecutor overhead.
     if total_batches == 1:
-        result = process_batch(1, batches[0])
+        result = _push_single_batch(
+            ctx.client,
+            ctx.profile_id,
+            sanitized_folder_name,
+            str_do,
+            str_status,
+            str_group,
+            1,
+            batches[0],
+        )
         if result:
             successful_batches += 1
             ctx.existing_rules.update(result)
@@ -2313,7 +2321,17 @@ def push_rules(
 
         with executor_ctx as executor:
             futures = {
-                executor.submit(process_batch, i, batch): i
+                executor.submit(
+                    _push_single_batch,
+                    ctx.client,
+                    ctx.profile_id,
+                    sanitized_folder_name,
+                    str_do,
+                    str_status,
+                    str_group,
+                    i,
+                    batch,
+                ): i
                 for i, batch in enumerate(batches, 1)
             }
 
@@ -2332,12 +2350,12 @@ def push_rules(
     if successful_batches == total_batches:
         if USE_COLORS:
             sys.stderr.write(
-                f"\r\033[K{Colors.GREEN}✅ Folder {sanitize_for_log(folder_name)}: Finished ({len(filtered_hostnames):,} {pluralize(len(filtered_hostnames), 'rule')}){Colors.ENDC}\n"
+                f"\r\033[K{Colors.GREEN}✅ Folder {sanitized_folder_name}: Finished ({len(filtered_hostnames):,} {pluralize(len(filtered_hostnames), 'rule')}){Colors.ENDC}\n"
             )
             sys.stderr.flush()
         else:
             log.info(
-                f"✅ Folder {sanitize_for_log(folder_name)} – finished ({len(filtered_hostnames):,} new {pluralize(len(filtered_hostnames), 'rule')} added)"
+                f"✅ Folder {sanitized_folder_name} – finished ({len(filtered_hostnames):,} new {pluralize(len(filtered_hostnames), 'rule')} added)"
             )
         return True
     if USE_COLORS:
@@ -2345,11 +2363,48 @@ def push_rules(
         sys.stderr.flush()
     log.error(
         "Folder %s – only %d/%d batches succeeded",
-        sanitize_for_log(folder_name),
+        sanitized_folder_name,
         successful_batches,
         total_batches,
     )
     return False
+
+
+def push_rules(
+    ctx: SyncContext,
+    folder_name: str,
+    folder_id: str,
+    action: RuleAction,
+    hostnames: list[str],
+) -> bool:
+    """
+    Pushes rules to a folder in batches, filtering duplicates and invalid rules.
+
+    Deduplicates input, validates rules against _ALLOWED_RULE_CHARS, and sends batches
+    in parallel for optimal performance. Updates ctx.existing_rules set with newly
+    added rules. Returns True if all batches succeed.
+    """
+    if not hostnames:
+        log.info("Folder %s - no rules to push", sanitize_for_log(folder_name))
+        return True
+
+    filtered_hostnames = _filter_rules_for_folder(
+        ctx.existing_rules, hostnames, folder_name
+    )
+
+    if not filtered_hostnames:
+        log.info(
+            f"Folder {sanitize_for_log(folder_name)} - no new rules to push after filtering duplicates"
+        )
+        return True
+
+    return _push_rule_batches(
+        ctx,
+        folder_name,
+        folder_id,
+        action,
+        filtered_hostnames,
+    )
 
 
 def _process_single_folder(

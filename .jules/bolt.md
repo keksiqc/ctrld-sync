@@ -4,3 +4,6 @@
 ## 2026-04-25 - Native String Methods vs. Dynamically Compiled Regex for KV parsing
 **Learning:** For simple string parsing like extracting `KEY=value` pairs, native string manipulation (e.g., `value.split('=', 1)` and `value.strip()`) is noticeably faster than dynamically formatted and compiled regex (e.g., `re.match(rf'^{re.escape(key)}\s*=\s*(.+)$')`).
 **Action:** When extracting values with a single fixed delimiter, prefer using `.split()` and `.strip()` instead of dynamically interpolating variables into regex patterns inside hot/frequently called functions.
+## 2026-05-14 - Extracting functions to improve readability and complexity score
+**Learning:** Monolithic functions such as `push_rules` that handle deduplication, API communication, and batch parallelization increase the cyclomatic complexity and trigger "Brain Method" warnings on tools like CodeScene.
+**Action:** Always decompose monolithic logic into small, modular private helper functions (e.g., `_filter_rules_for_folder`, `_push_rule_batches`) and keep the parent function strictly as an orchestrator.
