@@ -1990,7 +1990,7 @@ def warm_up_cache(urls: Sequence[str]) -> None:
 
     total = len(urls_to_process)
     if not USE_COLORS:
-        log.info(f"⏳ Warming up cache for {total:,} URLs...")
+        log.info(f"⏳ Warming up cache for {total:,} {pluralize(total, 'URL')}...")
 
     # OPTIMIZATION: Combine validation (DNS) and fetching (HTTP) in one task
     # to allow validation latency to be parallelized.
@@ -2629,7 +2629,7 @@ def sync_profile(
                         )
 
         log.info(
-            f"Sync complete: {success_count}/{len(folder_data_list)} folders processed successfully"
+            f"Sync complete: {success_count}/{len(folder_data_list)} {pluralize(len(folder_data_list), 'folder')} processed successfully"
         )
         return success_count == len(folder_data_list)
 
