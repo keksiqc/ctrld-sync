@@ -1,10 +1,2 @@
-import dotenv
-import httpx
-import pytest
-
-from typing import Any
-
-def mock_load_dotenv(*args: Any, **kwargs: Any) -> bool:
-    return True
-
-dotenv.load_dotenv = mock_load_dotenv
+from main import _extract_folder_id_from_response, _poll_for_folder_id, create_folder
+print(f"Functions imported successfully")
