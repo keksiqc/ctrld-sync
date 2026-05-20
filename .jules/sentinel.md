@@ -22,3 +22,8 @@
 **Vulnerability:** The application constructs `ValueError` exception strings that include dynamic, attacker-controlled values, specifically the `Content-Type` HTTP header and `url`, without sanitization. These exception strings are ultimately caught and logged by the system, creating a vulnerability for log injection or secret leakage if an attacker returns a malicious `Content-Type` or constructs a malicious URL.
 **Learning:** Attacker-controlled values must be explicitly sanitized before being embedded in exception messages that will be logged. Relying on exception handlers to log strings safely without sanitizing the underlying data first creates a vector for log injection attacks, where malicious payloads can pollute the logs or exploit log viewing systems.
 **Prevention:** Apply a sanitization function, such as `sanitize_for_log()`, to all dynamic HTTP headers or external inputs before concatenating them into exception messages.
+
+## 2025-05-10 - Unsanitized Headers/URLs in Error Messages
+**Vulnerability:** Log Injection & Secret Leakage via un-sanitized API response fields (e.g. `Content-Type` header) and un-sanitized target URLs embedded directly into exception messages (which are subsequently logged).
+**Learning:** Even internal exception messages (like `ValueError`) that are meant to provide diagnostic context can become log injection vectors or leak redacted secrets (like tokens in query strings) if the embedded dynamic values (URLs, Headers) bypass the central logging sanitizer.
+**Prevention:** Ensure that ALL dynamic variables passed into exception strings are explicitly wrapped in `sanitize_for_log()` if the exception string is eventually rendered to the console or log system.
