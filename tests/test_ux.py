@@ -631,6 +631,7 @@ class TestGetPasswordHint:
             f"hint should not be duplicated, got: {prompt!r}"
         )
 
+
 def test_print_plan_details_dry_run_placeholder(monkeypatch, capsys):
     monkeypatch.setattr(main, "USE_COLORS", False)
     plan_entry = main.PlanEntry(profile="dry-run-placeholder", folders=[])
@@ -638,9 +639,11 @@ def test_print_plan_details_dry_run_placeholder(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "Plan Details for (Unspecified):" in captured.out
 
+
 def test_print_summary_table_dry_run_placeholder(monkeypatch, capsys):
     monkeypatch.setattr(main, "USE_COLORS", False)
     from main import SyncResult
+
     sync_results = [
         SyncResult(
             profile="dry-run-placeholder",
