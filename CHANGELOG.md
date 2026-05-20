@@ -29,6 +29,7 @@
 
 **Security fixes:**
 
+- 🛡️ \[Medium\] Script injection via workflow\_dispatch input in copilot-setup-steps.yml \(CWE-94\) [\#828](https://github.com/abhimehro/ctrld-sync/issues/828)
 - \[Security\] Validated HIGH: Workflow command injection via AI-inference output in summary.yml [\#767](https://github.com/abhimehro/ctrld-sync/issues/767)
 - \[Code Quality\] Fix SECURITY.md placeholder content with accurate version info [\#358](https://github.com/abhimehro/ctrld-sync/issues/358)
 - \[Code Quality\] Update SECURITY.md with accurate version information [\#348](https://github.com/abhimehro/ctrld-sync/issues/348)
@@ -256,6 +257,12 @@
 
 **Merged pull requests:**
 
+- chore\(tests\): fix mypy type mismatch in test\_ux.py PlanEntry creation [\#831](https://github.com/abhimehro/ctrld-sync/pull/831) ([abhimehro](https://github.com/abhimehro))
+- 🛡️ Sentinel: \[MEDIUM\] Sanitize Content-Length header in error logs [\#829](https://github.com/abhimehro/ctrld-sync/pull/829) ([abhimehro](https://github.com/abhimehro))
+- chore\(deps\): bump idna from 3.10 to 3.15 in the uv group across 1 directory [\#827](https://github.com/abhimehro/ctrld-sync/pull/827) ([dependabot[bot]](https://github.com/apps/dependabot))
+- fix\(security\): prevent script injection via workflow\_dispatch input in copilot-setup-steps \(CWE-94\) [\#826](https://github.com/abhimehro/ctrld-sync/pull/826) ([abhimehro](https://github.com/abhimehro))
+- chore: fix formatting in fix\_env.py \(salvages \#781\) [\#823](https://github.com/abhimehro/ctrld-sync/pull/823) ([abhimehro](https://github.com/abhimehro))
+- fix\(security\): SSRF hardening \(salvages \#780\) [\#817](https://github.com/abhimehro/ctrld-sync/pull/817) ([abhimehro](https://github.com/abhimehro))
 - Jules Daily QA & Agentic Review [\#814](https://github.com/abhimehro/ctrld-sync/pull/814) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: improve empty state profile UX [\#813](https://github.com/abhimehro/ctrld-sync/pull/813) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Sanitize Content-Type header in exceptions [\#810](https://github.com/abhimehro/ctrld-sync/pull/810) ([abhimehro](https://github.com/abhimehro))
