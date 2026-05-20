@@ -1560,7 +1560,7 @@ def _gh_get(url: str) -> dict:
                             if "Response too large" in str(e):
                                 raise
                             log.warning(
-                                f"Malformed Content-Length header from {sanitize_for_log(url)}: {cl!r}. "
+                                f"Malformed Content-Length header from {sanitize_for_log(url)}: {sanitize_for_log(cl)}. "
                                 "Falling back to streaming size check."
                             )
 
@@ -1626,7 +1626,7 @@ def _gh_get(url: str) -> dict:
                     if "Response too large" in str(e):
                         raise
                     log.warning(
-                        f"Malformed Content-Length header from {sanitize_for_log(url)}: {cl!r}. "
+                        f"Malformed Content-Length header from {sanitize_for_log(url)}: {sanitize_for_log(cl)}. "
                         "Falling back to streaming size check."
                     )
 
