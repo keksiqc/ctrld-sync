@@ -633,7 +633,7 @@ class TestGetPasswordHint:
 
 def test_print_plan_details_dry_run_placeholder(monkeypatch, capsys):
     monkeypatch.setattr(main, "USE_COLORS", False)
-    plan_entry = {"profile": "dry-run-placeholder", "folders": []}
+    plan_entry = main.PlanEntry(profile="dry-run-placeholder", folders=[])
     main.print_plan_details(plan_entry)
     captured = capsys.readouterr()
     assert "Plan Details for (Unspecified):" in captured.out
