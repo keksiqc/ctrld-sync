@@ -43,6 +43,7 @@
 
 **Closed issues:**
 
+- \[repo-automation\] Weekly Retrospective - 2026-05-17 [\#812](https://github.com/abhimehro/ctrld-sync/issues/812)
 - \[repo-automation\] Weekly Retrospective - 2026-05-10 [\#777](https://github.com/abhimehro/ctrld-sync/issues/777)
 - \[repo-automation\] Weekly Retrospective - 2026-05-03 [\#758](https://github.com/abhimehro/ctrld-sync/issues/758)
 - \[repo-automation\] Weekly Retrospective - 2026-04-26 [\#744](https://github.com/abhimehro/ctrld-sync/issues/744)
@@ -263,6 +264,7 @@
 - fix\(security\): prevent script injection via workflow\_dispatch input in copilot-setup-steps \(CWE-94\) [\#826](https://github.com/abhimehro/ctrld-sync/pull/826) ([abhimehro](https://github.com/abhimehro))
 - fix\(tests\): resolve mypy type error in test\_ux.py [\#825](https://github.com/abhimehro/ctrld-sync/pull/825) ([abhimehro](https://github.com/abhimehro))
 - chore: fix formatting in fix\_env.py \(salvages \#781\) [\#823](https://github.com/abhimehro/ctrld-sync/pull/823) ([abhimehro](https://github.com/abhimehro))
+- ⚡ Bolt: Optimize hostnames deduplication before set membership check \(salvages \#811\) [\#820](https://github.com/abhimehro/ctrld-sync/pull/820) ([abhimehro](https://github.com/abhimehro))
 - fix\(security\): SSRF hardening \(salvages \#780\) [\#817](https://github.com/abhimehro/ctrld-sync/pull/817) ([abhimehro](https://github.com/abhimehro))
 - Jules Daily QA & Agentic Review [\#814](https://github.com/abhimehro/ctrld-sync/pull/814) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: improve empty state profile UX [\#813](https://github.com/abhimehro/ctrld-sync/pull/813) ([abhimehro](https://github.com/abhimehro))
