@@ -43,6 +43,7 @@
 
 **Closed issues:**
 
+- Daily QA Check - ctrld-sync - 2026-05-21 [\#832](https://github.com/abhimehro/ctrld-sync/issues/832)
 - \[repo-automation\] Weekly Retrospective - 2026-05-17 [\#812](https://github.com/abhimehro/ctrld-sync/issues/812)
 - \[repo-automation\] Weekly Retrospective - 2026-05-10 [\#777](https://github.com/abhimehro/ctrld-sync/issues/777)
 - \[repo-automation\] Weekly Retrospective - 2026-05-03 [\#758](https://github.com/abhimehro/ctrld-sync/issues/758)
@@ -258,6 +259,7 @@
 
 **Merged pull requests:**
 
+- chore: Jules Daily QA & Agentic Review [\#833](https://github.com/abhimehro/ctrld-sync/pull/833) ([abhimehro](https://github.com/abhimehro))
 - chore\(tests\): fix mypy type mismatch in test\_ux.py PlanEntry creation [\#831](https://github.com/abhimehro/ctrld-sync/pull/831) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Sanitize Content-Length header in error logs [\#829](https://github.com/abhimehro/ctrld-sync/pull/829) ([abhimehro](https://github.com/abhimehro))
 - chore\(deps\): bump idna from 3.10 to 3.15 in the uv group across 1 directory [\#827](https://github.com/abhimehro/ctrld-sync/pull/827) ([dependabot[bot]](https://github.com/apps/dependabot))
