@@ -163,9 +163,8 @@ def _parse_rate_limit_headers(response: httpx.Response) -> None:
         new_remaining = _extract_int_header(headers, "X-RateLimit-Remaining")
         new_reset = _extract_int_header(headers, "X-RateLimit-Reset")
 
-        limit_snapshot = None
-        remaining_snapshot = None
-        reset_snapshot = None
+        if new_limit is None and new_remaining is None and new_reset is None:
+            return
 
         with _rate_limit_lock:
             if new_limit is not None:
