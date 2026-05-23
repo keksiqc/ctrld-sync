@@ -43,6 +43,8 @@
 
 **Closed issues:**
 
+- Daily QA Check - ctrld-sync - 2026-05-23 [\#836](https://github.com/abhimehro/ctrld-sync/issues/836)
+- Daily QA Check - ctrld-sync - 2026-05-22 [\#834](https://github.com/abhimehro/ctrld-sync/issues/834)
 - Daily QA Check - ctrld-sync - 2026-05-21 [\#832](https://github.com/abhimehro/ctrld-sync/issues/832)
 - \[repo-automation\] Weekly Retrospective - 2026-05-17 [\#812](https://github.com/abhimehro/ctrld-sync/issues/812)
 - \[repo-automation\] Weekly Retrospective - 2026-05-10 [\#777](https://github.com/abhimehro/ctrld-sync/issues/777)
@@ -259,6 +261,7 @@
 
 **Merged pull requests:**
 
+- ⚡ Bolt: Add chunk\_size to fallback HTTP streaming [\#837](https://github.com/abhimehro/ctrld-sync/pull/837) ([abhimehro](https://github.com/abhimehro))
 - chore: Jules Daily QA & Agentic Review [\#833](https://github.com/abhimehro/ctrld-sync/pull/833) ([abhimehro](https://github.com/abhimehro))
 - chore\(tests\): fix mypy type mismatch in test\_ux.py PlanEntry creation [\#831](https://github.com/abhimehro/ctrld-sync/pull/831) ([abhimehro](https://github.com/abhimehro))
 - 🛡️ Sentinel: \[MEDIUM\] Sanitize Content-Length header in error logs [\#829](https://github.com/abhimehro/ctrld-sync/pull/829) ([abhimehro](https://github.com/abhimehro))
@@ -266,7 +269,9 @@
 - fix\(security\): prevent script injection via workflow\_dispatch input in copilot-setup-steps \(CWE-94\) [\#826](https://github.com/abhimehro/ctrld-sync/pull/826) ([abhimehro](https://github.com/abhimehro))
 - fix\(tests\): resolve mypy type error in test\_ux.py [\#825](https://github.com/abhimehro/ctrld-sync/pull/825) ([abhimehro](https://github.com/abhimehro))
 - chore: fix formatting in fix\_env.py \(salvages \#781\) [\#823](https://github.com/abhimehro/ctrld-sync/pull/823) ([abhimehro](https://github.com/abhimehro))
+- 🧹 Simplify deeply nested logic in \_parse\_rate\_limit\_headers \(salvages \#794\) [\#821](https://github.com/abhimehro/ctrld-sync/pull/821) ([abhimehro](https://github.com/abhimehro))
 - ⚡ Bolt: Optimize hostnames deduplication before set membership check \(salvages \#811\) [\#820](https://github.com/abhimehro/ctrld-sync/pull/820) ([abhimehro](https://github.com/abhimehro))
+- refactor\(api\): \_retry\_request readability \(salvages \#803\) [\#818](https://github.com/abhimehro/ctrld-sync/pull/818) ([abhimehro](https://github.com/abhimehro))
 - fix\(security\): SSRF hardening \(salvages \#780\) [\#817](https://github.com/abhimehro/ctrld-sync/pull/817) ([abhimehro](https://github.com/abhimehro))
 - Jules Daily QA & Agentic Review [\#814](https://github.com/abhimehro/ctrld-sync/pull/814) ([abhimehro](https://github.com/abhimehro))
 - 🎨 Palette: improve empty state profile UX [\#813](https://github.com/abhimehro/ctrld-sync/pull/813) ([abhimehro](https://github.com/abhimehro))
