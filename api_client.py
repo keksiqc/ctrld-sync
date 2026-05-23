@@ -214,8 +214,24 @@ def retry_with_jitter(
     return exponential_delay * random.random()
 
 
-def _log_debug_response(e: Exception) -> None:
-    """Log the response content if debug logging is enabled and response is present."""
+def _get_error_hint(e: Exception) -> str:
+    """Generate actionable error hints for logged exceptions."""
+    if isinstance(e, httpx.TimeoutException):
+        return f" | hint: {_TIMEOUT_HINT}"
+    if isinstance(e, httpx.ConnectError):
+        return f" | hint: {_CONNECT_ERROR_HINT}"
+    if (
+        isinstance(e, httpx.HTTPStatusError)
+        and hasattr(e, "response")
+        and e.response is not None
+        and e.response.status_code >= 500
+    ):
+        return f" | hint: {_SERVER_ERROR_HINT}"
+    return ""
+
+
+def _log_debug_response_content(e: Exception) -> None:
+    """Log response content at debug level if available."""
     if (
         hasattr(e, "response")
         and getattr(e, "response", None) is not None
@@ -224,16 +240,51 @@ def _log_debug_response(e: Exception) -> None:
         log.debug(f"Response content: {_sanitize_fn(e.response.text)}")
 
 
-def _get_retry_after_seconds(response: httpx.Response) -> int | None:
-    """Extract and parse the Retry-After header as integer seconds, or None if missing/invalid."""
-    retry_after = response.headers.get("Retry-After")
-    if not retry_after:
-        return None
-    import contextlib
+def _handle_rate_limit(
+    e: httpx.HTTPStatusError, attempt: int, max_retries: int
+) -> bool:
+    """
+    Handle 429 Too Many Requests by waiting if Retry-After is present.
 
+    Returns:
+        True if the request should be retried immediately (after sleeping).
+        False if no Retry-After header was found (should use default backoff).
+    """
+    if e.response.status_code != 429:
+        return False
+
+    retry_after = e.response.headers.get("Retry-After")
+    if not retry_after:
+        return False
+
+    wait_seconds: int | None = None
     with contextlib.suppress(ValueError):
-        return int(retry_after)
-    return None
+        wait_seconds = int(retry_after)
+
+    if wait_seconds is not None:
+        log.warning(
+            f"Rate limited (429). Server requests {wait_seconds}s wait "
+            f"(attempt {attempt + 1}/{max_retries})"
+        )
+        if attempt < max_retries - 1:
+            time.sleep(wait_seconds)
+            return True
+        raise e  # Max retries exceeded
+
+    return False
+
+
+def _check_client_error(e: httpx.HTTPStatusError) -> None:
+    """Raise exception for 4xx client errors (excluding 429) without retrying."""
+    code = e.response.status_code
+    if 400 <= code < 500 and code != 429:
+        hint = _4XX_HINTS.get(code, "")
+        hint_suffix = f" | hint: {hint}" if hint else ""
+        log.warning(
+            f"API request failed with HTTP {code}{hint_suffix}: {_sanitize_fn(e)}"
+        )
+        _log_debug_response_content(e)
+        raise e
 
 
 def _retry_request(
@@ -271,63 +322,24 @@ def _retry_request(
             # Security Enhancement: Do not retry client errors (4xx) except 429 (Too Many Requests).
             # Retrying 4xx errors is inefficient and can trigger security alerts or rate limits.
             if isinstance(e, httpx.HTTPStatusError):
-                code = e.response.status_code
-
                 # Parse rate limit headers even from error responses
                 # This helps us understand why we hit limits
                 _parse_rate_limit_headers(e.response)
 
-                # Handle 429 (Too Many Requests) with Retry-After
-                if code == 429:
-                    wait_seconds = _get_retry_after_seconds(e.response)
-                    if wait_seconds is not None:
-                        log.warning(
-                            f"Rate limited (429). Server requests {wait_seconds}s wait "
-                            f"(attempt {attempt + 1}/{max_retries})"
-                        )
-                        if attempt < max_retries - 1:
-                            time.sleep(wait_seconds)
-                            continue  # Retry after waiting
-                        raise  # Max retries exceeded
+                if _handle_rate_limit(e, attempt, max_retries):
+                    continue
 
-                # Don't retry other 4xx errors (auth failures, bad requests, etc.)
-                if 400 <= code < 500 and code != 429:
-                    hint = _4XX_HINTS.get(code, "")
-                    hint_suffix = f" | hint: {hint}" if hint else ""
-                    log.warning(
-                        f"API request failed with HTTP {code}{hint_suffix}: "
-                        f"{_sanitize_fn(e)}"
-                    )
-                    _log_debug_response(e)
-                    raise
+                _check_client_error(e)
 
             if attempt == max_retries - 1:
-                if (
-                    hasattr(e, "response")
-                    and e.response is not None
-                    and log.isEnabledFor(logging.DEBUG)
-                ):
-                    log.debug(f"Response content: {_sanitize_fn(e.response.text)}")
+                _log_debug_response_content(e)
                 raise
 
             # Full jitter exponential backoff: delay drawn from [0, min(delay * 2^attempt, MAX_RETRY_DELAY)]
             # Spreads retries evenly across the full window to prevent thundering herd
             wait_time = retry_with_jitter(attempt, base_delay=delay)
+            hint = _get_error_hint(e)
 
-            if isinstance(e, httpx.TimeoutException):
-                hint = f" | hint: {_TIMEOUT_HINT}"
-            elif isinstance(e, httpx.ConnectError):
-                hint = f" | hint: {_CONNECT_ERROR_HINT}"
-            elif (
-                isinstance(e, httpx.HTTPStatusError)
-                and hasattr(e, "response")
-                and e.response is not None
-                and e.response.status_code >= 500
-            ):
-                # Server-side error hint for 5xx responses
-                hint = f" | hint: {_SERVER_ERROR_HINT}"
-            else:
-                hint = ""
             log.warning(
                 f"Request failed (attempt {attempt + 1}/{max_retries}): "
                 f"{_sanitize_fn(e)}{hint}. Retrying in {wait_time:.2f}s..."
@@ -335,11 +347,6 @@ def _retry_request(
             time.sleep(wait_time)
 
     raise RuntimeError("_retry_request called with max_retries=0")
-
-
-# --------------------------------------------------------------------------- #
-# Thin API call wrappers (increment stats counter then delegate to _retry_request)
-# --------------------------------------------------------------------------- #
 
 
 def _api_get(client: httpx.Client, url: str) -> httpx.Response:
