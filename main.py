@@ -216,13 +216,23 @@ def create_folder(profile_id: str, name: str, do: int, status: int) -> Optional[
         )
         
         # Re-fetch the list and pick the folder we just created
-        data = _api_get(f"{API_BASE}/{profile_id}/groups").json()
-        for grp in data["body"]["groups"]:
-            if grp["group"].strip() == name.strip():
-                log.info("Created folder '%s' (ID %s)", name, grp["PK"])
-                time.sleep(FOLDER_CREATION_DELAY)
-                return str(grp["PK"])
-        
+        # Retry up to 5 times — folder may not appear immediately due to eventual consistency
+        for attempt in range(5):
+            data = _api_get(f"{API_BASE}/{profile_id}/groups").json()
+            for grp in data["body"]["groups"]:
+                if grp["group"].strip() == name.strip():
+                    log.info("Created folder '%s' (ID %s)", name, grp["PK"])
+                    time.sleep(FOLDER_CREATION_DELAY)
+                    return str(grp["PK"])
+
+            if attempt < 4:
+                wait = 2 * (attempt + 1)
+                log.warning(
+                    "Folder '%s' not yet visible (attempt %d/5), waiting %ds...",
+                    name, attempt + 1, wait,
+                )
+                time.sleep(wait)
+
         log.error(f"Folder '{name}' was not found after creation")
         return None
     except (httpx.HTTPError, KeyError) as e:
