@@ -1,10 +1,20 @@
 [project]
 name = "ctrld-sync"
 version = "0.1.0"
-description = "Simple script which syncs defined Control D folders"
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "httpx>=0.28.1",
-    "python-dotenv>=1.1.1",
+authors = [
+    { name = "Keksi", email = "git@keksi.dev" }
 ]
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic-settings>=2.15.0",
+    "typer>=0.27.1",
+]
+
+[project.scripts]
+ctrld-sync = "ctrld_sync:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
